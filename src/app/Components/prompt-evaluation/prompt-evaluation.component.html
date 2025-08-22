@@ -1,0 +1,156 @@
+<div class="relative w-full min-h-screen bg-gray-50">
+
+    <div class="w-full max-w-[1100px] mx-auto px-4 py-5">
+        <!-- Page Header -->
+        <div class="mb-4">
+            <h1 class="font-semibold text-gray-900 text-2xl tracking-tight mb-1">
+                Prompt Evaluation
+            </h1>
+            <p class="text-[15px] text-gray-600 leading-[1.35]">
+                Analyze and improve your prompts with AI-powered feedback
+            </p>
+        </div>
+
+        <!-- Choose Template Button -->
+        <div class="flex justify-end mb-4">
+            <button (click)="handleChooseTemplate()" [routerLink]="['/user-templates']"
+                class="inline-flex h-9 items-center justify-center px-3 bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
+                <span class="font-medium text-white text-[14px] leading-none">Choose a Template</span>
+            </button>
+        </div>
+
+        <!-- Prompt Input -->
+        <section class="mb-4" aria-labelledby="prompt-input-heading">
+            <div class="bg-white rounded-lg border border-gray-200 p-3 mb-3">
+                <label for="prompt-input" class="sr-only">Enter your prompt for evaluation</label>
+                <textarea id="prompt-input" [(ngModel)]="promptText"
+                    placeholder="Enter your prompt here for evaluation..."
+                    class="w-full h-28 text-[15px] text-gray-800 leading-[1.35] resize-none border-none outline-none bg-transparent placeholder:text-gray-400"></textarea>
+            </div>
+            <div class="flex justify-end">
+                <button (click)="handleEvaluate(promptText)"
+                    class="inline-flex h-9 items-center justify-center px-4 bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
+                    <span class="font-medium text-white text-[14px] leading-none">Evaluate</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Results -->
+        <section class="mb-4 grid grid-cols-1 lg:grid-cols-3 gap-4" aria-labelledby="evaluation-results-heading">
+            <!-- Original Prompt -->
+            <article class="lg:col-span-2 bg-white rounded-lg border border-gray-200 p-4">
+                <h2 class="font-semibold text-gray-900 text-[18px] leading-[1.3] mb-3">Original Prompt</h2>
+
+                <div class="mb-3">
+                    <div class="mb-2">
+                        <p class="text-[15px] text-gray-800 leading-[1.35]">
+                            <span class="inline-flex items-center px-1 bg-amber-100 mr-1">Write a story</span>
+                            about a character who discovers a magical portal in their backyard. The story should be
+                            <span class="inline-flex items-center px-1 bg-blue-100 mx-1">interesting</span>
+                            and
+                            <span class="inline-flex items-center px-1 bg-violet-100 ml-1">unique</span>.
+                        </p>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <div class="flex items-start gap-1.5" *ngFor="let suggestion of suggestions">
+                            <svg class="w-4 h-4 text-gray-500 mt-[2px]" viewBox="0 0 16 15" fill="currentColor">
+                                <path d="M8 1L10 5H14L11 8L12 12L8 10L4 12L5 8L2 5H6L8 1Z" />
+                            </svg>
+                            <p class="text-[14px] text-gray-600 leading-snug">{{ suggestion.text }}</p>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Scores -->
+            <aside class="bg-white rounded-lg border border-gray-200 p-4">
+                <h2 class="font-semibold text-gray-900 text-[18px] leading-[1.3] mb-3">Evaluation Scores</h2>
+
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between" *ngFor="let score of evaluationScores">
+                        <span class="text-[15px] text-gray-600 leading-[1.35]">{{ score.label }}</span>
+                        <div class="flex items-center gap-2">
+                            <span [class]="'font-semibold text-[15px] leading-none ' + score.color">{{ score.score
+                                }}</span>
+                            <div class="w-[88px] h-3 bg-gray-200 rounded-full overflow-hidden">
+                                <div [class]="'h-3 rounded-full transition-all duration-300 ' + getScoreBarColor(score.score)"
+                                    [style.width.%]="getScorePercentage(score.score)"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-gray-200 pt-3">
+                        <div class="flex items-center justify-between">
+                            <span class="font-semibold text-gray-900 text-[15px] leading-none">Overall Score</span>
+                            <div class="flex items-center gap-2">
+                                <span class="font-semibold text-blue-600 text-[15px] leading-none">7.6/10</span>
+                                <div class="w-[88px] h-3 bg-gray-200 rounded-full overflow-hidden">
+                                    <div class="h-3 rounded-full bg-blue-500 transition-all duration-300"
+                                        style="width: 76%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </section>
+
+        <!-- Suggested Rewrites -->
+        <section class="mb-5" aria-labelledby="suggested-rewrites-heading">
+            <h2 class="font-semibold text-gray-900 text-[18px] leading-[1.3] mb-4">Suggested Rewrites</h2>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <article *ngFor="let version of rewriteVersions; let i = index"
+                    class="bg-white rounded-lg border border-gray-200 p-4 flex flex-col h-[360px]">
+                    <h3 class="font-semibold text-gray-900 text-[15px] leading-[1.3] mb-3">{{ version.title }}</h3>
+
+                    <div class="flex-1 mb-3">
+                        <p
+                            [class]="'text-[15px] text-gray-600 leading-[1.35] overflow-hidden ' + (i === 2 ? 'line-clamp-6' : 'line-clamp-7')">
+                            {{ version.content }}
+                        </p>
+                    </div>
+
+                    <div class="space-y-1.5 mb-3">
+                        <div class="flex items-center gap-2" *ngFor="let improvement of version.improvements">
+                            <svg class="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 13 13" fill="currentColor">
+                                <path
+                                    d="M6.5 1.5L8 4.5L11.5 5L9 7.5L9.5 11L6.5 9.5L3.5 11L4 7.5L1.5 5L5 4.5L6.5 1.5Z" />
+                            </svg>
+                            <span class="text-[14px] text-gray-600 leading-snug flex-1">{{ improvement.text }}</span>
+                        </div>
+                    </div>
+
+                    <button (click)="handleApplyRewrite(version)"
+                        class="w-full h-[38px] flex items-center justify-center px-3 rounded-md border border-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
+                        <span class="font-medium text-blue-600 text-[14px] leading-none">Apply</span>
+                    </button>
+                </article>
+            </div>
+        </section>
+
+        <!-- Footer Actions -->
+        <footer class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-200">
+            <div class="flex items-center gap-3">
+                <button (click)="handleRevise()"
+                    class="inline-flex h-9 items-center justify-center px-4 bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
+                    <span class="font-medium text-white text-[14px] leading-none">Revise</span>
+                </button>
+                <button (click)="handleSubmitOriginal()"
+                    class="inline-flex h-9 items-center justify-center px-4 rounded-md border border-gray-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1">
+                    <span class="text-[14px] text-gray-700 leading-none">Submit Original</span>
+                </button>
+            </div>
+
+            <button (click)="handleSaveToHistory()"
+                class="flex items-center gap-2 px-4 h-9 rounded-md border border-gray-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1">
+                <svg class="w-4 h-4 text-gray-500" viewBox="0 0 14 14" fill="currentColor">
+                    <path
+                        d="M12 1H5C4.5 1 4 1.5 4 2V3H3C2.5 3 2 3.5 2 4V12C2 12.5 2.5 13 3 13H10C10.5 13 11 12.5 11 12V11H12C12.5 11 13 10.5 13 10V2C13 1.5 12.5 1 12 1Z" />
+                </svg>
+                <span class="text-[14px] text-gray-700 leading-none">Save to History</span>
+            </button>
+        </footer>
+    </div>
+</div>

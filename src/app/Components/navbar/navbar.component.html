@@ -1,0 +1,29 @@
+<header class="w-full h-16 bg-white border-b border-gray-200 fixed top-0 inset-x-0 z-40">
+    <div class="flex w-full max-w-[1280px] h-[63px] items-center justify-between px-6 mx-auto">
+        <div class="flex items-center gap-12">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6">
+                    <svg width="16" height="24" viewBox="0 0 16 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 2L2 8L8 14M8 10L14 16L8 22" stroke="#1F2937" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </div>
+                <div class="font-bold text-blue-600 text-xl leading-7">promptEval</div>
+            </div>
+
+            <nav class="flex items-center gap-8" role="navigation" aria-label="Main navigation">
+                <!-- Use ONLY routerLink to avoid full reloads -->
+                <a *ngFor="let item of items" [routerLink]="item.href" routerLinkActive="text-blue-900"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    class="font-medium text-gray-600 text-base leading-6 hover:text-blue-900 transition-colors">
+                    {{ item.label }}
+                </a>
+            </nav>
+        </div>
+
+        <button type="button" class="inline-flex h-10 items-center justify-center px-4 py-2 bg-blue-600 rounded-lg
+                   hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            <span class="font-medium text-white text-base leading-6">Sign In</span>
+        </button>
+    </div>
+</header>
