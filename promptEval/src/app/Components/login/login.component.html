@@ -1,0 +1,119 @@
+<div class="min-h-screen bg-white flex flex-col">
+
+    <!-- tiny top bar (brand left, language + signup right) -->
+    <div class="border-b border-gray-200">
+        <div class="mx-auto max-w-[1100px] px-4 h-12 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="h-5 w-5 rounded bg-blue-600"></div>
+                <span class="text-sm font-semibold text-gray-900">promptEval</span>
+            </div>
+            <div class="flex items-center gap-4 text-sm">
+                <button type="button" class="text-gray-600 hover:text-gray-900 inline-flex items-center gap-1">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2zm1 17.93V20h-2v-.07A8.12 8.12 0 0 1 4.07 13H4v-2h.07A8.12 8.12 0 0 1 11 4.07V4h2v.07A8.12 8.12 0 0 1 19.93 11H20v2h-.07A8.12 8.12 0 0 1 13 19.93z" />
+                    </svg>
+                    English
+                </button>
+                <a routerLink="/register" class="text-blue-600 hover:underline">Sign up</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- center card -->
+    <div class="flex-1 flex items-start sm:items-center justify-center">
+        <div
+            class="mt-10 sm:mt-0 w-full max-w-[420px] rounded-xl border border-gray-200 bg-white p-6 shadow-[0_6px_24px_rgba(0,0,0,0.06)]">
+            <div class="text-center">
+                <h1 class="text-lg font-semibold text-gray-900">Welcome to promptEval</h1>
+                <p class="mt-1 text-sm text-gray-600">Your AI Prompt Evaluation Assistant</p>
+                <p class="mt-1 text-xs text-gray-500">Analyze, optimize, and perfect your prompts with advanced AI
+                    assistance</p>
+            </div>
+
+            <form class="mt-5" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+                <!-- Email -->
+                <label class="block text-xs font-medium text-gray-700">Email address</label>
+                <input type="email" formControlName="email" placeholder="Enter your email"
+                    class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <p *ngIf="email?.touched && email?.errors?.['required']" class="mt-1 text-xs text-red-600">Email is
+                    required.</p>
+                <p *ngIf="email?.touched && email?.errors?.['email']" class="mt-1 text-xs text-red-600">Enter a valid
+                    email.</p>
+
+                <!-- Password + forgot -->
+                <div class="mt-4 flex items-center justify-between">
+                    <label class="text-xs font-medium text-gray-700">Password</label>
+                    <button type="button" (click)="forgotPassword()" class="text-xs text-blue-600 hover:underline">
+                        Forgot password?
+                    </button>
+                </div>
+                <div class="mt-1 relative">
+                    <input [type]="showPassword ? 'text' : 'password'" formControlName="password"
+                        placeholder="Enter your password"
+                        class="w-full rounded-md border border-gray-300 px-3 py-2 pr-10 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <button type="button" (click)="togglePassword()"
+                        class="absolute inset-y-0 right-2 my-auto h-6 w-6 text-gray-500 hover:text-gray-700"
+                        aria-label="Toggle password visibility">
+                        <svg *ngIf="!showPassword" viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor">
+                            <path
+                                d="M12 5C7 5 2.73 8.11 1 12c1.73 3.89 6 7 11 7s9.27-3.11 11-7c-1.73-3.89-6-7-11-7Zm0 12a5 5 0 1 1 5-5 5 5 0 0 1-5 5Z" />
+                        </svg>
+                        <svg *ngIf="showPassword" viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor">
+                            <path
+                                d="M12 6c-4.1 0-7.7 2.4-9.4 6 1.1 2.3 3 4.2 5.3 5.3L4 21l1.4 1.4 16-16L20 4l-3.1 3.1C15.5 6.4 13.8 6 12 6Zm0 12c4.1 0 7.7-2.4 9.4-6-.6-1.2-1.4-2.2-2.4-3.1L16 12.9A5 5 0 0 1 11.1 17L9 19.1c.9.3 1.9.5 3 .5Z" />
+                        </svg>
+                    </button>
+                </div>
+                <p *ngIf="password?.touched && password?.errors?.['required']" class="mt-1 text-xs text-red-600">
+                    Password is required.</p>
+                <p *ngIf="password?.touched && password?.errors?.['minlength']" class="mt-1 text-xs text-red-600">At
+                    least 8 characters.</p>
+
+                <button type="submit"
+                    class="mt-4 h-10 w-full rounded-md bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    [disabled]="form.invalid">
+                    Sign In
+                </button>
+
+                <!-- Divider -->
+                <div class="my-4 flex items-center gap-3">
+                    <div class="h-px flex-1 bg-gray-200"></div>
+                    <span class="text-[11px] text-gray-500">or continue with</span>
+                    <div class="h-px flex-1 bg-gray-200"></div>
+                </div>
+
+                <!-- Social -->
+                <div class="grid grid-cols-2 gap-3">
+                    <button type="button" (click)="social('google')"
+                        class="h-9 rounded-md border border-gray-300 bg-white text-sm text-gray-800 hover:bg-gray-50">
+                        <span class="inline-flex items-center gap-2 justify-center w-full">
+                            <span
+                                class="inline-flex h-5 w-5 items-center justify-center rounded bg-gray-100 text-gray-700 text-xs font-semibold">G</span>
+                            Google
+                        </span>
+                    </button>
+                    <button type="button" (click)="social('github')"
+                        class="h-9 rounded-md border border-gray-300 bg-white text-sm text-gray-800 hover:bg-gray-50">
+                        <span class="inline-flex items-center gap-2 justify-center w-full">
+                            <span
+                                class="inline-flex h-5 w-5 items-center justify-center rounded bg-gray-100 text-gray-700 text-xs font-semibold">GH</span>
+                            GitHub
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- footer -->
+    <footer class="border-t border-gray-200">
+        <div class="mx-auto max-w-[1100px] px-4 h-12 flex items-center justify-between text-xs text-gray-500">
+            <div class="flex items-center gap-4">
+                <a href="#" class="hover:text-gray-700">Privacy Policy</a>
+                <a href="#" class="hover:text-gray-700">Terms of Service</a>
+            </div>
+            <div>© {{ currentYear }} promptEval. All rights reserved.</div>
+        </div>
+    </footer>
+</div>

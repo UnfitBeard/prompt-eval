@@ -1,0 +1,198 @@
+<div class="bg-white">
+
+    <!-- Hero -->
+    <section class="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white">
+        <div class="mx-auto max-w-[1100px] px-4 pt-10 pb-8">
+            <div class="grid grid-cols-1 lg:grid-cols-[1.2fr,0.8fr] gap-6 items-start">
+                <div>
+                    <div class="text-sm font-medium text-blue-600">{{ hero.eyebrow }}</div>
+                    <h1 class="mt-2 text-3xl sm:text-4xl font-semibold text-gray-900 tracking-tight">
+                        {{ hero.title }}
+                    </h1>
+                    <p class="mt-3 text-[15px] leading-[1.5] text-gray-600">
+                        {{ hero.desc }}
+                    </p>
+
+                    <div class="mt-5 flex flex-wrap items-center gap-3">
+                        <button
+                            class="h-10 rounded-md bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700">
+                            {{ hero.primaryCta }}
+                        </button>
+                        <button
+                            class="h-10 rounded-md border border-gray-300 bg-white px-4 text-sm font-medium text-gray-800 hover:bg-gray-50">
+                            {{ hero.secondaryCta }}
+                        </button>
+                    </div>
+
+                    <div class="mt-6 flex items-center gap-3 text-xs text-gray-500">
+                        <svg class="h-4 w-4 text-amber-500" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2 2 22h20L12 2zm1 15h-2v2h2v-2zm0-8h-2v6h2V9z" />
+                        </svg>
+                        No credit card required • Cancel anytime
+                    </div>
+                </div>
+
+                <!-- Hero highlight card -->
+                <div class="rounded-xl border border-blue-100 bg-white p-4 shadow-sm">
+                    <div class="text-sm font-semibold text-gray-900">{{ hero.highlight.title }}</div>
+                    <ul class="mt-3 space-y-2">
+                        <li *ngFor="let p of hero.highlight.points"
+                            class="flex items-start gap-2 text-[14px] text-gray-700">
+                            <span
+                                class="mt-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z" />
+                                </svg>
+                            </span>
+                            <span class="leading-snug">{{ p }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Logos -->
+            <div class="mt-8">
+                <div class="text-xs text-gray-500">Trusted by leading companies</div>
+                <div class="mt-3 flex flex-wrap items-center gap-3">
+                    <span *ngFor="let c of companies"
+                        class="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1">
+                        <span
+                            class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-700 text-xs font-semibold">
+                            {{ initials(c) }}
+                        </span>
+                        <span class="text-sm text-gray-700">{{ c }}</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="py-8">
+        <div class="mx-auto max-w-[1100px] px-4">
+            <h2 class="text-center text-xl font-semibold text-gray-900">Powerful Features</h2>
+            <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div *ngFor="let f of features" class="rounded-xl border border-gray-200 bg-white p-4">
+                    <div class="flex items-start gap-3">
+                        <div class="h-9 w-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                            <ng-container [ngSwitch]="f.icon">
+                                <svg *ngSwitchCase="'spark'" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2l2.5 6.5L21 11l-6.5 2.5L12 20l-2.5-6.5L3 11l6.5-2.5L12 2z" />
+                                </svg>
+                                <svg *ngSwitchCase="'shield'" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2l8 4v6c0 5-3.5 9.5-8 10-4.5-.5-8-5-8-10V6l8-4z" />
+                                </svg>
+                                <svg *ngSwitchCase="'clock'" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 8v5l4 2" />
+                                    <path d="M21 12A9 9 0 1 1 12 3a9 9 0 0 1 9 9z" />
+                                </svg>
+                                <svg *ngSwitchCase="'target'" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 7v5l4 2" />
+                                    <circle cx="12" cy="12" r="8" />
+                                </svg>
+                                <svg *ngSwitchCase="'chart'" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M3 3h2v18H3zM8 13h2v8H8zM13 9h2v12h-2zM18 5h2v16h-2z" />
+                                </svg>
+                                <svg *ngSwitchDefault class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M13 2 3 14h7v8l11-13h-7z" />
+                                </svg>
+                            </ng-container>
+                        </div>
+                        <div>
+                            <div class="text-sm font-semibold text-gray-900">{{ f.title }}</div>
+                            <p class="mt-1 text-sm text-gray-600 leading-snug">{{ f.desc }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="py-8 bg-gray-50">
+        <div class="mx-auto max-w-[1100px] px-4">
+            <h2 class="text-center text-xl font-semibold text-gray-900">How It Works</h2>
+            <div class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div *ngFor="let s of steps" class="rounded-xl border border-gray-200 bg-white p-4 text-center">
+                    <div
+                        class="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                        <ng-container [ngSwitch]="s.icon">
+                            <span *ngSwitchCase="'one'" class="font-semibold">1</span>
+                            <span *ngSwitchCase="'two'" class="font-semibold">2</span>
+                            <span *ngSwitchDefault class="font-semibold">3</span>
+                        </ng-container>
+                    </div>
+                    <div class="text-sm font-semibold text-gray-900">{{ s.title }}</div>
+                    <p class="mt-1 text-sm text-gray-600 leading-snug">{{ s.desc }}</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="py-8">
+        <div class="mx-auto max-w-[1100px] px-4">
+            <h2 class="text-center text-xl font-semibold text-gray-900">Simple, Transparent Pricing</h2>
+
+            <div class="mt-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div *ngFor="let p of plans" class="relative rounded-2xl border p-5 bg-white"
+                    [ngClass]="p.highlight ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200 shadow-sm'">
+
+                    <div *ngIf="p.badge"
+                        class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-blue-600 px-3 py-1 text-xs font-medium text-white">
+                        {{ p.badge }}
+                    </div>
+
+                    <div class="text-sm font-semibold text-gray-900">{{ p.name }}</div>
+                    <div class="mt-1 flex items-end gap-1">
+                        <div class="text-3xl font-semibold text-gray-900">{{ p.price }}</div>
+                        <div class="pb-1 text-sm text-gray-500" *ngIf="p.period">{{ p.period }}</div>
+                    </div>
+
+                    <ul class="mt-4 space-y-2">
+                        <li *ngFor="let f of p.features" class="flex items-start gap-2 text-sm text-gray-700">
+                            <svg class="mt-0.5 h-4 w-4 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z" />
+                            </svg>
+                            <span class="leading-snug">{{ f }}</span>
+                        </li>
+                    </ul>
+
+                    <button class="mt-5 w-full h-10 rounded-md text-sm font-medium"
+                        [ngClass]="p.highlight ? 'bg-blue-600 text-white hover:bg-blue-700' : 'border border-gray-300 text-gray-800 hover:bg-gray-50'">
+                        {{ p.cta }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-300">
+        <div class="mx-auto max-w-[1100px] px-4 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <div class="h-6 w-6 rounded bg-blue-600"></div>
+                        <div class="text-white font-semibold">promptEval</div>
+                    </div>
+                    <p class="mt-3 text-sm text-gray-400">Making prompt engineering easier and more accessible for
+                        everyone.</p>
+                </div>
+
+                <div *ngFor="let col of footerCols">
+                    <div class="text-sm font-semibold text-white">{{ col.heading }}</div>
+                    <ul class="mt-3 space-y-2">
+                        <li *ngFor="let l of col.links">
+                            <a [href]="l.href" class="text-sm text-gray-300 hover:text-white">{{ l.label }}</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-6 border-t border-gray-800 pt-4 text-xs text-gray-500">
+                © {{ currentYear }} promptEval. All rights reserved.
+            </div>
+        </div>
+    </footer>
+</div>

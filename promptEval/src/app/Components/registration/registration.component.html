@@ -1,0 +1,124 @@
+<div class="min-h-screen bg-white">
+    <div class="mx-auto max-w-[980px] px-4 pt-10">
+        <!-- Header line (you said to ignore navbar; keeping centered title) -->
+        <div class="text-center">
+            <h1 class="text-2xl font-semibold text-gray-900">Join promptEval</h1>
+            <p class="mt-1 text-sm text-gray-600">Start evaluating and improving your prompts today</p>
+        </div>
+
+        <div class="mx-auto mt-8 max-w-[520px] rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+                <!-- Full Name -->
+                <label class="block text-sm font-medium text-gray-700">Full Name</label>
+                <div class="mt-1">
+                    <input type="text" formControlName="fullName" placeholder="Enter your full name"
+                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <p *ngIf="hasError('fullName','required')" class="mt-1 text-xs text-red-600">Full name is required.</p>
+
+                <!-- Email -->
+                <label class="mt-4 block text-sm font-medium text-gray-700">Work Email</label>
+                <div class="mt-1">
+                    <input type="email" formControlName="email" placeholder="Enter your work email"
+                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <p *ngIf="hasError('email','required')" class="mt-1 text-xs text-red-600">Email is required.</p>
+                <p *ngIf="hasError('email','email')" class="mt-1 text-xs text-red-600">Enter a valid email.</p>
+
+                <!-- Password -->
+                <label class="mt-4 block text-sm font-medium text-gray-700">Password</label>
+                <div class="mt-1 relative">
+                    <input [type]="show.password ? 'text' : 'password'" formControlName="password"
+                        placeholder="Create a password"
+                        class="w-full rounded-md border border-gray-300 px-3 py-2 pr-10 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <button type="button" (click)="toggle('password')"
+                        class="absolute inset-y-0 right-2 my-auto h-6 w-6 text-gray-500 hover:text-gray-700">
+                        <svg *ngIf="!show.password" viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor">
+                            <path
+                                d="M12 5C7 5 2.73 8.11 1 12c1.73 3.89 6 7 11 7s9.27-3.11 11-7c-1.73-3.89-6-7-11-7Zm0 12a5 5 0 1 1 5-5 5 5 0 0 1-5 5Z" />
+                        </svg>
+                        <svg *ngIf="show.password" viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor">
+                            <path
+                                d="M12 6c-4.1 0-7.7 2.4-9.4 6 1.1 2.3 3 4.2 5.3 5.3L4 21l1.4 1.4 16-16L20 4l-3.1 3.1C15.5 6.4 13.8 6 12 6Zm0 12c4.1 0 7.7-2.4 9.4-6-.6-1.2-1.4-2.2-2.4-3.1L16 12.9A5 5 0 0 1 11.1 17L9 19.1c.9.3 1.9.5 3 .5Z" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="mt-1 text-xs text-gray-600 flex items-center gap-3">
+                    <span>{{ strengthLabel }}</span>
+                    <div class="h-1.5 w-40 rounded-full bg-gray-200 overflow-hidden">
+                        <div class="h-1.5 rounded-full transition-all duration-300" [ngClass]="strengthBarClass"
+                            [style.width.%]="strengthScore"></div>
+                    </div>
+                </div>
+                <p *ngIf="hasError('password','required')" class="mt-1 text-xs text-red-600">Password is required.</p>
+                <p *ngIf="hasError('password','minlength')" class="mt-1 text-xs text-red-600">At least 8 characters.</p>
+
+                <!-- Confirm Password -->
+                <label class="mt-4 block text-sm font-medium text-gray-700">Confirm Password</label>
+                <div class="mt-1 relative">
+                    <input [type]="show.confirm ? 'text' : 'password'" formControlName="confirmPassword"
+                        placeholder="Confirm your password"
+                        class="w-full rounded-md border border-gray-300 px-3 py-2 pr-10 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <button type="button" (click)="toggle('confirm')"
+                        class="absolute inset-y-0 right-2 my-auto h-6 w-6 text-gray-500 hover:text-gray-700">
+                        <svg *ngIf="!show.confirm" viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor">
+                            <path
+                                d="M12 5C7 5 2.73 8.11 1 12c1.73 3.89 6 7 11 7s9.27-3.11 11-7c-1.73-3.89-6-7-11-7Zm0 12a5 5 0 1 1 5-5 5 5 0 0 1-5 5Z" />
+                        </svg>
+                        <svg *ngIf="show.confirm" viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor">
+                            <path
+                                d="M12 6c-4.1 0-7.7 2.4-9.4 6 1.1 2.3 3 4.2 5.3 5.3L4 21l1.4 1.4 16-16L20 4l-3.1 3.1C15.5 6.4 13.8 6 12 6Zm0 12c4.1 0 7.7-2.4 9.4-6-.6-1.2-1.4-2.2-2.4-3.1L16 12.9A5 5 0 0 1 11.1 17L9 19.1c.9.3 1.9.5 3 .5Z" />
+                        </svg>
+                    </button>
+                </div>
+                <p *ngIf="(form.touched || submitted) && form.errors?.['mismatch']" class="mt-1 text-xs text-red-600">
+                    Passwords do not match.
+                </p>
+
+                <!-- Organization -->
+                <label class="mt-4 block text-sm font-medium text-gray-700">Organization Name (Optional)</label>
+                <div class="mt-1">
+                    <input type="text" formControlName="organization" placeholder="Enter your organization name"
+                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+
+                <!-- Submit -->
+                <button type="submit"
+                    class="mt-5 inline-flex h-10 w-full items-center justify-center rounded-md bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    [disabled]="form.invalid">
+                    Create Account
+                </button>
+
+                <p class="mt-2 text-[11px] text-gray-500 text-center">
+                    By signing up, you agree to our
+                    <a href="#" class="text-blue-600 hover:underline">Terms of Service</a>
+                    and
+                    <a href="#" class="text-blue-600 hover:underline">Privacy Policy</a>
+                </p>
+
+                <!-- Divider -->
+                <div class="my-4 flex items-center gap-3">
+                    <div class="h-px flex-1 bg-gray-200"></div>
+                    <span class="text-[11px] text-gray-500">or continue with</span>
+                    <div class="h-px flex-1 bg-gray-200"></div>
+                </div>
+
+                <!-- Social buttons -->
+                <div class="grid grid-cols-3 gap-3">
+                    <button type="button" (click)="social('google')"
+                        class="h-9 rounded-md border border-gray-300 bg-white text-sm text-gray-800 hover:bg-gray-50">
+                        G
+                    </button>
+                    <button type="button" (click)="social('github')"
+                        class="h-9 rounded-md border border-gray-300 bg-white text-sm text-gray-800 hover:bg-gray-50">
+                        <span class="font-semibold">GH</span>
+                    </button>
+                    <button type="button" (click)="social('sso')"
+                        class="h-9 rounded-md border border-gray-300 bg-white text-sm text-gray-800 hover:bg-gray-50">
+                        SSO
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
