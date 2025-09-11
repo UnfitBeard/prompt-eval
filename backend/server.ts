@@ -53,9 +53,8 @@ async function run() {
       console.error(err);
       res.status(500).json({ error: 'Internal Server Error' });
     });
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
+  } catch (error) {
+    console.error('Error connecting to MongoDB:', error);
   }
 }
 
