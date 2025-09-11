@@ -20,6 +20,8 @@ app.use(
 );
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+app.get('/health', (_req, res) => res.status(200).send('ok'));
+app.get('/', (_req, res) => res.send('Welcome'));
 
 const uri: string = process.env.MONGO_DB_URI!;
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -43,10 +45,6 @@ async function run() {
 
     app.use('/api/v1/auth', authRoutes);
     app.use('/api/v1/prompts', promptRoutes);
-
-    app.get('/', (_req: Request, res: Response) => {
-      res.send('Welcome to the backend server!');
-    });
 
     // Basic error handler (optional but useful)
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
