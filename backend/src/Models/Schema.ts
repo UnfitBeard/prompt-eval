@@ -226,7 +226,7 @@ const TemplateSchema = new Schema<ITemplate>(
     },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     organization: { type: Schema.Types.ObjectId, ref: 'Organization' },
-    versions: { type: VersionSchema.get, default: [] },
+    // versions: { type: VersionSchema.get, default: [] },
     stats: {
       uses: { type: Number, default: 0, index: true },
       avgScore: { type: Number, default: 0 },

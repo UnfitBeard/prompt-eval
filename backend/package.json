@@ -26,8 +26,10 @@
   },
   "dependencies": {
     "@langchain/google-genai": "^0.2.16",
+    "@types/axios": "^0.14.4",
     "@types/bcryptjs": "^3.0.0",
     "@types/express": "^5.0.3",
+    "axios": "^1.12.2",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",

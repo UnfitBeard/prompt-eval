@@ -1,98 +1,112 @@
-import express from "express";
-import dotenv from "dotenv";
-import { Request, Response, NextFunction } from "express";
-import { Collection, Db } from "mongodb";
-import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs";
-import { generateToken } from "../../Utils/Helpers/generateToken";
+import express from 'express';
+import dotenv from 'dotenv';
+import { Request, Response, NextFunction } from 'express';
+import { Collection, Db } from 'mongodb';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import { generateToken } from '../../Utils/Helpers/generateToken';
+import mongoose from 'mongoose';
+import axios from 'axios';
+import { IUser, User } from '../../Models/Schema';
 dotenv.config();
 
-export const registration =
-  (db: Db) => async (req: Request, res: Response, next: NextFunction) => {
-    const { username, email, password, organization } = req.body;
+export const registration = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { username, email, password } = req.body;
 
-    if (!username || !password || !email) {
-      return res.status(400).json({ message: "Missing credentials." });
+  if (!username || !password || !email) {
+    console.log('Error: Missing credentials');
+    return res.status(400).json({ message: 'Missing credentials.' });
+  }
 
-      console.log("Error: Missing credentials");
+  try {
+    const existingUser = await User.findOne({ email });
+    if (existingUser)
+      return res.status(400).json({ message: 'User already registered' });
+    const passwordHash = bcrypt.hashSync(password, 10);
+
+    const newUser = new User({
+      fullName: username,
+      email,
+      passwordHash,
+    });
+
+    await newUser.save();
+
+    const tokens = await generateToken(res, newUser._id, newUser.email);
+
+    res.status(201).json({
+      message: 'User created successfully',
+      user: {
+        id: newUser._id,
+        email: newUser.email,
+        fullName: newUser.fullName,
+        organization: newUser.organization,
+      },
+      token: tokens,
+    });
+  } catch (error) {
+    console.error('Error: ', error);
+    res.status(500).json({
+      message: 'Internal server error',
+    });
+  }
+};
+
+export const login = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    console.log('Error: Missing email or password in login request');
+
+    return res
+      .status(400)
+      .json({ message: 'Email and password are required.' });
+  }
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid credentials.' });
     }
 
-    try {
-      const passwordHash = bcrypt.hashSync(password, 10);
+    const passwordIsTrue = bcrypt.compareSync(password, user.passwordHash);
 
-      const users: Collection = db.collection("users");
-
-      if (!users) {
-        await db.createCollection(users);
-        console.log("Created new users table as it was non existent");
-      }
-
-      const newUser = await users.insertOne({
-        username: username,
-        email: email,
-        password: password,
-        organization: organization,
+    if (!passwordIsTrue) {
+      return res.status(401).json({
+        message: 'Wrong credentials',
       });
-
-      if (newUser.insertedId) {
-        return res.status(401).json({
-          message: "Could not add new user try again later",
-        });
-      }
-
-      res.status(201).json({
-        message: "User created successfully",
-        user: {
-          id: newUser.insertedId,
-          username: username,
-          email: email,
-          organization: organization,
-        },
-      });
-    } catch (error) {
-      console.error("Error: ", error);
-      res.status(500).json({
-        message: "Internal server error",
-      });
-    }
-  };
-
-export const login =
-  (db: Db) => async (req: Request, res: Response, next: NextFunction) => {
-    const { name, password } = req.body;
-
-    if (!name || !password) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required." });
-
-      console.log("Error: Missing email or password in login request");
     }
 
-    try {
-      const users: Collection = db.collection("users");
+    const tokens = await generateToken(res, user._id, user.email);
 
-      const user = await users.findOne({ name, password });
+    return res.status(200).json({
+      message: 'Login successful',
+      user: {
+        id: user._id,
+        email: user.email,
+        fullName: user.fullName,
+      },
+      token: tokens,
+    });
+  } catch (error) {
+    console.error('Error during login:', error);
+    return res.status(500).json({ message: 'Internal server error.' });
+  }
+};
 
-      if (!user) {
-        return res.status(400).json({ message: "Invalid credentials." });
-      }
+export const githubAuthRedirect = async (_req: Request, res: Response) => {
+  const redirectUrl = 'http://localhost:10000/api/v1/auth/githubAuth';
+  const clientId = process.env.GITHUB_CLIENT_ID;
 
-      const passwordIsTrue = bcrypt.compareSync(password, user.password);
-
-      if (!passwordIsTrue) {
-        return res.status(401).json({
-          message: "Wrong credentials",
-        });
-      }
-
-      const tokens = await generateToken(res, user._id, user.email);
-
-      return res
-        .status(200)
-        .json({ message: "Login successful", user, tokens: { tokens } });
-    } catch (error) {
-      console.error("Error during login:", error);
-      return res.status(500).json({ message: "Internal server error." });
-    }
-  };
+  const url = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUrl}&scope=user:email`;
+  res.redirect(url);
+};
