@@ -14,7 +14,6 @@ export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegistrationComponent },
   { path: 'prompt-evaluation', component: PromptEvaluationComponent },
-  { path: 'profile', component: PromptEvaluationComponent },
   { path: 'user-templates', component: UserTemplatesComponent },
   { path: 'dashboard', component: DashboardComponent },
   { path: 'landing-page', component: LandingPageComponent },
