@@ -12,9 +12,12 @@ import mongoose, { mongo } from 'mongoose';
 const app = express();
 const PORT = Number(process.env.PORT) || 10000;
 
+const allowedOrigins = ['http://localhost:4200'];
+
 app.use(
   cors({
-    origin: '*',
+    origin: allowedOrigins,
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   })
