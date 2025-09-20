@@ -15,9 +15,9 @@ export const registration = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { username, email, password } = req.body;
+  const { fullName, email, password } = req.body;
 
-  if (!username || !password || !email) {
+  if (!fullName || !password || !email) {
     console.log('Error: Missing credentials');
     return res.status(400).json({ message: 'Missing credentials.' });
   }
@@ -29,7 +29,7 @@ export const registration = async (
     const passwordHash = bcrypt.hashSync(password, 10);
 
     const newUser = new User({
-      fullName: username,
+      fullName,
       email,
       passwordHash,
     });
@@ -44,7 +44,7 @@ export const registration = async (
         id: newUser._id,
         email: newUser.email,
         fullName: newUser.fullName,
-        organization: newUser.organization,
+        // organization: newUser.organization,
       },
       token: tokens,
     });
