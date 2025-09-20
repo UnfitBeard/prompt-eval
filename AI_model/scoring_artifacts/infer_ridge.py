@@ -14,11 +14,11 @@ app = Flask(__name__)
 CORS(app)
 
 
-def load_scorer(art_dir="scoring_artifacts"):
-    with open(f"{art_dir}/meta.json") as f:
+def load_scorer():
+    with open(f"meta.json") as f:
         meta = json.load(f)
     embedder = SentenceTransformer(meta["embedder_name"])
-    reg = joblib.load(f"{art_dir}/regressor.joblib")
+    reg = joblib.load(f"regressor.joblib")
     return embedder, reg, meta["targets"], meta["version"]
 
 
