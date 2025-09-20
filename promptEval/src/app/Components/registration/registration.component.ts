@@ -9,6 +9,8 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
+import { Router, RouteReuseStrategy } from '@angular/router';
+import { AuthService } from '../../Services/auth.service';
 
 function matchPassword(group: AbstractControl): ValidationErrors | null {
   const pass = group.get('password')?.value ?? '';
@@ -26,7 +28,11 @@ export class RegistrationComponent {
   form: FormGroup;
   show = { password: false, confirm: false };
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private router: Router,
+    private authService: AuthService
+  ) {
     this.form = this.fb.group(
       {
         fullName: ['', [Validators.required, Validators.minLength(2)]],
@@ -100,9 +106,13 @@ export class RegistrationComponent {
       return;
     }
     const { fullName, email, password, organization } = this.form.value;
-    const payload = { fullName, email, password, organization };
+    const payload = { fullName, email, password };
     console.log('REGISTER →', payload);
-    alert('Account created (demo)! Check console for payload.');
+
+    this.authService.register(payload).subscribe({
+      next: () => this.router.navigate(['dashboard']),
+      error: (err) => console.error(err),
+    });
   }
 
   social(provider: 'google' | 'github' | 'sso') {

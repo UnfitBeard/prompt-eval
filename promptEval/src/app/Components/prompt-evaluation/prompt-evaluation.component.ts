@@ -1,7 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import {
+  PromptEvalService,
+  EvaluateResponse,
+  RecommendationsResponse,
+  RewriteVersion,
+  Suggestion,
+  ScoresResponse,
+} from '../../Services/prompt-eval.service'; // <-- adjust path as needed
+import { map, switchMap } from 'rxjs';
 
 interface EvaluationScore {
   label: string;
@@ -9,18 +18,8 @@ interface EvaluationScore {
   color: string;
 }
 
-interface Suggestion {
-  text: string;
-}
-
 interface Improvement {
   text: string;
-}
-
-interface RewriteVersion {
-  title: string;
-  content: string;
-  improvements: Improvement[];
 }
 
 @Component({
@@ -30,62 +29,67 @@ interface RewriteVersion {
   styleUrl: './prompt-evaluation.component.css',
 })
 export class PromptEvaluationComponent {
+  private svc = inject(PromptEvalService);
   promptText: string = '';
 
+  loading = false;
+  errorMsg: string | null = null;
+
   evaluationScores: EvaluationScore[] = [
-    { label: 'Clarity', score: '8/10', color: 'text-amber-500' },
-    { label: 'Context', score: '7/10', color: 'text-blue-500' },
-    { label: 'Relevance', score: '9/10', color: 'text-green-500' },
-    { label: 'Specificity', score: '6/10', color: 'text-purple-500' },
-    { label: 'Creativity', score: '8/10', color: 'text-orange-500' },
+    { label: 'Clarity', score: '—', color: 'text-amber-500' },
+    { label: 'Context', score: '—', color: 'text-blue-500' },
+    { label: 'Relevance', score: '—', color: 'text-green-500' },
+    { label: 'Specificity', score: '—', color: 'text-purple-500' },
+    { label: 'Creativity', score: '—', color: 'text-orange-500' },
   ];
+  suggestions: Suggestion[] = [];
 
-  suggestions: Suggestion[] = [
-    {
-      text: 'Consider adding more specific details about the character and their discovery',
-    },
-    {
-      text: 'Add context about the setting and time period',
-    },
-  ];
-
-  rewriteVersions: RewriteVersion[] = [
-    {
-      title: 'Enhanced Version',
-      content:
-        "Write a coming-of-age story about 16-year-old Sarah, who discovers an ancient magical portal in her family's overgrown backyard. The portal leads to a mystical forest where time flows differently, and she must navigate both worlds while keeping her discovery hidden from her skeptical parents.",
-      improvements: [
-        { text: 'Added specific character details' },
-        { text: 'Included setting description' },
-        { text: 'Introduced plot elements' },
-      ],
-    },
-    {
-      title: 'Alternative Version',
-      content:
-        'Create a story about a young inventor named Alex who discovers a mysterious portal in their backyard laboratory. The portal connects to a parallel universe where technology and magic coexist, forcing Alex to choose between their normal life and this extraordinary new world.',
-      improvements: [
-        { text: "Changed character's background" },
-        { text: 'Added technological elements' },
-        { text: 'Introduced conflict' },
-      ],
-    },
-    {
-      title: 'Minimalist Version',
-      content:
-        'Describe a scene where a character finds a glowing portal in their backyard. The portal emits a soft, warm light and seems to connect to an unknown dimension. The character approaches cautiously, their heart racing with anticipation.',
-      improvements: [
-        { text: 'Focused on atmosphere' },
-        { text: 'Reduced character details' },
-        { text: 'Emphasized sensory elements' },
-      ],
-    },
-  ];
+  rewriteVersions: RewriteVersion[] = [];
 
   constructor(private router: Router) {}
 
+  // helper functions
+  private toTenFmt(n: number | null | undefined): string {
+    if (n === null || n === undefined || Number.isNaN(n)) return '_';
+
+    //clamp to [1, 10] then format like "8.1/10"
+    const v = Math.max(1, Math.min(10, Number(n)));
+    return `${Math.round(v * 10) / 10}/10`;
+  }
+
+  private mapScores(resp: ScoresResponse) {
+    const mapping: Record<string, number | null | undefined> = {
+      Clarity: resp.Clarity,
+      Context: resp.Context,
+      Creativity: resp.Creativity,
+      Specificity: resp.Specificity,
+      Relevance: resp.Relevance,
+    };
+
+    this.evaluationScores = this.evaluationScores.map((row) => ({
+      ...row,
+      score: this.toTenFmt(mapping[row.label]),
+    }));
+  }
+
+  private mapRecommendation(resp: EvaluateResponse) {
+    this.suggestions = Array.isArray(resp.suggestions) ? resp.suggestions : [];
+    this.rewriteVersions = Array.isArray(resp.rewriteVersions)
+      ? resp.rewriteVersions
+      : [];
+  }
+
   handleEvaluate(prompt: string): void {
-    console.log('Evaluating prompt:', prompt);
+    const text = (prompt ?? '').trim();
+    if (!text) {
+      this.errorMsg = 'Please enter a prompt to evaluate';
+      return;
+    }
+
+    this.errorMsg = null;
+    this.loading = true;
+
+    this.handleResultsAndRecommendations(prompt);
   }
 
   handleApplyRewrite(version: RewriteVersion): void {
@@ -108,6 +112,32 @@ export class PromptEvaluationComponent {
     console.log('Choosing template');
     this.router.navigate(['/user-templates']);
   }
+
+  handleResultsAndRecommendations = async (prompt: string) => {
+    this.svc
+      .getPromptScores(prompt)
+      .pipe(
+        map((resp) => {
+          this.mapScores(resp);
+          return prompt;
+        }),
+        switchMap((p) => this.svc.evaluatePrompt(p))
+      )
+      .subscribe({
+        next: (resp) => {
+          this.mapRecommendation(resp);
+          if (resp._error) {
+            this.errorMsg =
+              'Model result was not strictly JSON; showing partial results';
+          }
+          this.loading = false;
+        },
+        error: (err) => {
+          this.loading = false;
+          this.errorMsg = err.message || 'Evaluation Failed';
+        },
+      });
+  };
 
   getCardPosition(index: number): string {
     switch (index) {

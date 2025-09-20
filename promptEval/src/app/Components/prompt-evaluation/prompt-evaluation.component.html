@@ -44,11 +44,7 @@
                 <div class="mb-3">
                     <div class="mb-2">
                         <p class="text-[15px] text-gray-800 leading-[1.35]">
-                            <span class="inline-flex items-center px-1 bg-amber-100 mr-1">Write a story</span>
-                            about a character who discovers a magical portal in their backyard. The story should be
-                            <span class="inline-flex items-center px-1 bg-blue-100 mx-1">interesting</span>
-                            and
-                            <span class="inline-flex items-center px-1 bg-violet-100 ml-1">unique</span>.
+                            {{promptText || 'Enter your prompt in the provided section above'}}
                         </p>
                     </div>
 
@@ -84,7 +80,7 @@
                         <div class="flex items-center justify-between">
                             <span class="font-semibold text-gray-900 text-[15px] leading-none">Overall Score</span>
                             <div class="flex items-center gap-2">
-                                <span class="font-semibold text-blue-600 text-[15px] leading-none">7.6/10</span>
+                                <span class="font-semibold text-blue-600 text-[15px] leading-none">4.5</span>
                                 <div class="w-[88px] h-3 bg-gray-200 rounded-full overflow-hidden">
                                     <div class="h-3 rounded-full bg-blue-500 transition-all duration-300"
                                         style="width: 76%"></div>
@@ -95,7 +91,6 @@
                 </div>
             </aside>
         </section>
-
         <!-- Suggested Rewrites -->
         <section class="mb-5" aria-labelledby="suggested-rewrites-heading">
             <h2 class="font-semibold text-gray-900 text-[18px] leading-[1.3] mb-4">Suggested Rewrites</h2>

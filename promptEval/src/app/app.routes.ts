@@ -8,6 +8,7 @@ import { AdminTemplateCreatorComponent } from './Components/admin-template-creat
 import { AdminProfileComponent } from './Components/admin-profile/admin-profile.component';
 import { RegistrationComponent } from './Components/registration/registration.component';
 import { LoginComponent } from './Components/login/login.component';
+import { authGuard } from './Guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', component: LandingPageComponent },
@@ -15,9 +16,25 @@ export const routes: Routes = [
   { path: 'register', component: RegistrationComponent },
   { path: 'prompt-evaluation', component: PromptEvaluationComponent },
   { path: 'user-templates', component: UserTemplatesComponent },
-  { path: 'dashboard', component: DashboardComponent },
+  {
+    path: 'dashboard',
+    component: DashboardComponent,
+    canActivate: [authGuard],
+  },
   { path: 'landing-page', component: LandingPageComponent },
-  { path: 'admin/admin-dashboard', component: AdminDashboardComponent },
-  { path: 'admin/templates', component: AdminTemplateCreatorComponent },
-  { path: 'admin/profile', component: AdminProfileComponent },
+  {
+    path: 'admin/admin-dashboard',
+    component: AdminDashboardComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'admin/templates',
+    component: AdminTemplateCreatorComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'admin/profile',
+    component: AdminProfileComponent,
+    canActivate: [authGuard],
+  },
 ];
