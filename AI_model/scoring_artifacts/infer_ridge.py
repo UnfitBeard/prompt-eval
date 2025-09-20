@@ -35,6 +35,11 @@ t0 = time.time()
 EMBEDDER, REG, TARGETS, VERSION = load_scorer()
 
 
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({"ok": True}), 200
+
+
 @app.route('/evaluate', methods=['POST'])
 def evaluate():
     payload = request.get_json(silent=True)
