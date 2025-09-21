@@ -8,7 +8,6 @@ import os
 import json
 import joblib
 import numpy as np
-from sentence_transformers import SentenceTransformer
 from fastembed import TextEmbedding
 
 app = Flask(__name__)
