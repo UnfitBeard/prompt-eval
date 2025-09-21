@@ -1,17 +1,8 @@
 {
   "embedder_name": "sentence-transformers/all-MiniLM-L6-v2",
-  "targets": [
-    "Clarity",
-    "Context",
-    "Relevance",
-    "Specificity",
-    "Creativity"
-  ],
+  "fastembed_name": "sentence-transformers/all-MiniLM-L6-v2",
+  "targets": ["Clarity", "Context", "Relevance", "Specificity", "Creativity"],
   "alpha": 0.3,
-  "val_metrics": {
-    "alpha": 0.3,
-    "MAE_macro": 0.8347495620449383,
-    "RMSE_macro": 1.0462229854399734
-  },
+  "val_metrics": { "alpha": 0.3, "MAE_macro": 0.8347, "RMSE_macro": 1.0462 },
   "version": "ridge-v1"
 }
