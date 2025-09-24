@@ -43,6 +43,29 @@
             </div>
         </div>
 
+        <!--Description-->
+        <div class="mb-5">
+            <div class="text-sm font-medium text-gray-800 mb-2">Write the title of the prompt</div>
+            <div class="rounded-lg border border-gray-200 bg-white">
+                <input [(ngModel)]="form.title" rows="8" placeholder="Write the description here"
+                    class="w-full resize-y rounded-lg p-3 outline-none border-none text-sm text-gray-800 placeholder:text-gray-400" />
+                <div class="flex items-center justify-between px-3 pb-2 text-xs text-gray-500">
+                    <div>{{ promptChars }} chars</div>
+                </div>
+            </div>
+        </div>
+        <!--Description-->
+        <div class="mb-5">
+            <div class="text-sm font-medium text-gray-800 mb-2">Write the description of the prompt</div>
+            <div class="rounded-lg border border-gray-200 bg-white">
+                <textarea [(ngModel)]="form.description" rows="8" placeholder="Write the description here"
+                    class="w-full resize-y rounded-lg p-3 outline-none border-none text-sm text-gray-800 placeholder:text-gray-400"></textarea>
+                <div class="flex items-center justify-between px-3 pb-2 text-xs text-gray-500">
+                    <div>{{ promptChars }} chars</div>
+                </div>
+            </div>
+        </div>
+
         <!-- Difficulty -->
         <div class="mb-5">
             <div class="text-sm font-medium text-gray-800 mb-2">Choose Difficulty Level</div>
