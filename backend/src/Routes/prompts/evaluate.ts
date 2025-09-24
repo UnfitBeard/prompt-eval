@@ -4,10 +4,13 @@ import {
   evaluatePromptWithMyFlaskAI,
   recommendations,
 } from '../../Controllers/Prompts/evaluate';
+import { addTemplate, getTemplates } from '../../Controllers/Prompts/templates';
 
 const router = express.Router();
 
 router.post('/evaluate', evaluate);
 router.post('/recommendations', recommendations);
 router.post('/get-results', evaluatePromptWithMyFlaskAI);
+router.post('/admin/templates', addTemplate);
+router.post('/get-templates', getTemplates);
 export default router;

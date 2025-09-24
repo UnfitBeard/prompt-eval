@@ -211,7 +211,7 @@ export interface ITemplate {
 
 const TemplateSchema = new Schema<ITemplate>(
   {
-    title: { type: String, required: true, trim: true },
+    title: { type: String, trim: true },
     description: { type: String, trim: true },
     domain: { type: String, enum: Domains, required: true, index: true },
     category: { type: String, enum: Categories, required: true, index: true },
