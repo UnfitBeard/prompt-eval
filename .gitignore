@@ -40,3 +40,79 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+# -------------------------
+# Global
+# -------------------------
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.swp
+*.swo
+*.swn
+*.bak
+
+# Environment & secrets
+.env
+*.env.local
+.env.*
+!.env.example
+
+# IDE / Editor configs
+.vscode/
+.idea/
+*.iml
+
+# Python (Flask scorer)
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pkl
+*.sqlite3
+*.db
+*.egg-info/
+.eggs/
+.pytest_cache/
+.tox/
+.venv/
+AI_model/my_venv/
+AI_model/.pytest_cache/
+
+# Node / TypeScript (backend + Angular frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+coverage/
+*.tsbuildinfo
+
+# Angular (promptEval)
+promptEval/dist/
+promptEval/.angular/
+promptEval/.cache/
+
+# Backend build artifacts
+backend/dist/
+backend/coverage/
+
+# Build / cache artifacts
+dist/
+build/
+.cache/
+.tmp/
+out/
+
+# OS generated files
+ehthumbs.db
+desktop.ini
+
+# Draw.io / design exports (optional: keep only source files)
+*.drawio.png
+*.drawio.pdf
+
+# VSCode launch configs (optional)
+.vscode/
+.history/
