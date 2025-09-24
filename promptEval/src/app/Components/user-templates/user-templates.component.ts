@@ -1,11 +1,16 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import {
+  PromptsResponse,
+  TemplatesService,
+} from '../../Services/templates.service';
+import { map } from 'rxjs';
 
 type TemplateCard = {
   title: string;
   description: string;
-  domain: 'Software Engineering' | 'Content Writing' | 'Education';
+  domain: string;
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
   rating: number; // 0..5
   uses: number;
@@ -27,64 +32,16 @@ export class UserTemplatesComponent {
     rating: 0, // 0 = all, 3 = 3+ stars, 4 = 4+ stars, etc.
   };
 
-  readonly tabs: Array<TemplateCard['domain']> = [
+  readonly tabs = [
     'Software Engineering',
     'Content Writing',
     'Education',
-  ];
+  ] as const;
 
   // Mock cards matching the screenshot
-  cards: TemplateCard[] = [
-    {
-      title: 'Code Review Template',
-      description:
-        'A comprehensive template for reviewing code quality and functionality',
-      domain: 'Software Engineering',
-      difficulty: 'Intermediate',
-      rating: 4.8,
-      uses: 2345,
-    },
-    {
-      title: 'Blog Post Structure',
-      description: 'Structured template for creating engaging blog content',
-      domain: 'Content Writing',
-      difficulty: 'Beginner',
-      rating: 4.5,
-      uses: 1890,
-    },
-    {
-      title: 'Lesson Plan Template',
-      description: 'Detailed template for creating effective lesson plans',
-      domain: 'Education',
-      difficulty: 'Intermediate',
-      rating: 4.7,
-      uses: 1567,
-    },
-    {
-      title: 'Bug Report Template',
-      description: 'Standardized template for reporting software bugs',
-      domain: 'Software Engineering',
-      difficulty: 'Beginner',
-      rating: 4.6,
-      uses: 3421,
-    },
-    {
-      title: 'Social Media Content',
-      description: 'Template for creating engaging social media posts',
-      domain: 'Content Writing',
-      difficulty: 'Beginner',
-      rating: 4.4,
-      uses: 2789,
-    },
-    {
-      title: 'Quiz Generation',
-      description: 'Template for creating educational quizzes',
-      domain: 'Education',
-      difficulty: 'Advanced',
-      rating: 4.9,
-      uses: 1234,
-    },
-  ];
+  cards: TemplateCard[] = [];
+
+  constructor(private templateService: TemplatesService) {}
 
   get filteredCards(): TemplateCard[] {
     return this.cards
@@ -141,6 +98,46 @@ export class UserTemplatesComponent {
       });
     } else {
       this.fallbackCopy(text);
+    }
+  }
+
+  ngOnInit() {
+    this.getAllTemplates();
+  }
+
+  getAllTemplates() {
+    this.templateService.getTemplates().subscribe({
+      next: (resp) => {
+        this.cards = this.mapToTemplateCards(resp);
+      },
+      error: (err) => {
+        console.error(err);
+      },
+    });
+  }
+
+  mapToTemplateCards(response: PromptsResponse): TemplateCard[] {
+    return response.templates.map((tpl) => ({
+      title: tpl.title ?? 'Untitled Template',
+      description:
+        tpl.description ?? 'No description available for this template.',
+      domain: this.formatDomain(tpl.domain),
+      difficulty: tpl.difficulty as TemplateCard['difficulty'], // ✅ cast
+      rating: tpl.stats.avgScore || 0, // backend avgScore is 0..10, UI wants stars (0..5 or 0..10)
+      uses: tpl.stats.uses,
+    }));
+  }
+
+  private formatDomain(domain: string) {
+    switch (domain.toLowerCase()) {
+      case 'software':
+        return 'Software Engineering';
+      case 'education':
+        return 'Education';
+      case 'content':
+        return 'Content Writing';
+      default:
+        return domain;
     }
   }
 }

@@ -135,6 +135,8 @@ export class AdminTemplateCreatorComponent {
 
   // ---------------- FORM STATE ----------------
   form = {
+    title: '',
+    description: '',
     domain: null as Domain['key'] | null,
     difficulty: 'Beginner' as Difficulty,
     category: null as Category['key'] | null,
