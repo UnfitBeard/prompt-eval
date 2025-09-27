@@ -11,30 +11,54 @@ import { LoginComponent } from './Components/login/login.component';
 import { authGuard } from './Guards/auth.guard';
 
 export const routes: Routes = [
-  { path: '', component: LandingPageComponent },
-  { path: 'login', component: LoginComponent },
-  { path: 'register', component: RegistrationComponent },
-  { path: 'prompt-evaluation', component: PromptEvaluationComponent },
-  { path: 'user-templates', component: UserTemplatesComponent },
+  {
+    path: '',
+    component: LandingPageComponent,
+    data: { hideFooter: true },
+  },
+  {
+    path: 'login',
+    component: LoginComponent,
+    data: { hideNavbar: true, hideFooter: true },
+  },
+  {
+    path: 'register',
+    component: RegistrationComponent,
+    data: { hideNavbar: true, hideFooter: true },
+  },
+  {
+    path: 'prompt-evaluation',
+    component: PromptEvaluationComponent,
+    data: { hideFooter: true },
+  },
+  {
+    path: 'user-templates',
+    component: UserTemplatesComponent,
+    data: { hideFooter: true },
+  },
   {
     path: 'dashboard',
     component: DashboardComponent,
     canActivate: [authGuard],
+    data: { hideFooter: true },
   },
   { path: 'landing-page', component: LandingPageComponent },
   {
     path: 'admin/admin-dashboard',
     component: AdminDashboardComponent,
     canActivate: [authGuard],
+    data: { hideFooter: true },
   },
   {
     path: 'admin/templates',
     component: AdminTemplateCreatorComponent,
     canActivate: [authGuard],
+    data: { hideFooter: true },
   },
   {
     path: 'admin/profile',
     component: AdminProfileComponent,
     canActivate: [authGuard],
+    data: { hideFooter: true },
   },
 ];

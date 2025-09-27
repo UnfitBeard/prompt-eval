@@ -42,7 +42,7 @@ export const addTemplate = async (
 
   await newTemplate.save();
   res.status(201).json({
-    message: 'Prompt Created successfully',
+    message: 'Template Created successfully',
     prompt: {
       domain: newTemplate._id,
       category: newTemplate.category,

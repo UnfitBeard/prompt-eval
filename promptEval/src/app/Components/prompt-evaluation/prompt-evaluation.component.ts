@@ -34,6 +34,7 @@ export class PromptEvaluationComponent {
 
   loading = false;
   errorMsg: string | null = null;
+  overallScore: number | null = null;
 
   evaluationScores: EvaluationScore[] = [
     { label: 'Clarity', score: '—', color: 'text-amber-500' },
@@ -49,11 +50,25 @@ export class PromptEvaluationComponent {
   constructor(private router: Router) {}
 
   // helper functions
-  private toTenFmt(n: number | null | undefined): string {
-    if (n === null || n === undefined || Number.isNaN(n)) return '_';
+  get overallScorePct(): number {
+    return this.overallScore != null
+      ? Math.max(0, Math.min(100, this.overallScore * 10))
+      : 0;
+  }
 
-    //clamp to [1, 10] then format like "8.1/10"
-    const v = Math.max(1, Math.min(10, Number(n)));
+  private avg(vals: Array<number | null | undefined>): number | null {
+    const nums = vals
+      .map((v) => (typeof v === 'number' ? v : NaN))
+      .filter((v) => Number.isFinite(v)) as number[];
+    if (!nums.length) return null;
+    return (
+      Math.round((nums.reduce((a, b) => a + b, 0) / nums.length) * 10) / 10
+    ); // 1 decimal
+  }
+
+  private toTenFmt(n: number | null | undefined): string {
+    if (n == null || Number.isNaN(n)) return '—';
+    const v = Math.max(0, Math.min(10, Number(n)));
     return `${Math.round(v * 10) / 10}/10`;
   }
 
@@ -70,6 +85,13 @@ export class PromptEvaluationComponent {
       ...row,
       score: this.toTenFmt(mapping[row.label]),
     }));
+    this.overallScore = this.avg([
+      resp.Clarity,
+      resp.Context,
+      resp.Relevance,
+      resp.Specificity,
+      resp.Creativity,
+    ]);
   }
 
   private mapRecommendation(resp: EvaluateResponse) {

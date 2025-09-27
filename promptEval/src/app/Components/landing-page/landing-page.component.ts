@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-
+import { RouterLink } from '@angular/router';
 type Feature = {
   icon: 'spark' | 'shield' | 'clock' | 'target' | 'chart' | 'bolt';
   title: string;
@@ -21,7 +21,7 @@ type FooterCol = { heading: string; links: { label: string; href: string }[] };
 
 @Component({
   selector: 'app-landing-page',
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule, RouterLink],
   templateUrl: './landing-page.component.html',
   styleUrl: './landing-page.component.css',
 })

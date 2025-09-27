@@ -1,6 +1,15 @@
-<app-navbar [items]="navigationItems"></app-navbar>
-<div class="pt-16"></div>
-<router-outlet>
-</router-outlet>
-<div class="pt-16"></div>
-<app-footer></app-footer>
+<!-- app.component.html -->
+<div class="min-h-screen grid grid-rows-[auto_1fr_auto] bg-gray-50">
+    <header *ngIf="showNavbar()" class="sticky top-0 z-40 bg-white border-b h-16">
+        <app-navbar [items]="navigationItems"></app-navbar>
+    </header>
+
+    <!-- offset equals header height (16 = 64px) -->
+    <main class="relative" [class.pt-0.5]="showNavbar()">
+        <router-outlet></router-outlet>
+    </main>
+
+    <footer *ngIf="showFooter()">
+        <app-footer></app-footer>
+    </footer>
+</div>
