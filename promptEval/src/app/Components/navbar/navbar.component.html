@@ -11,18 +11,19 @@
                 <div class="font-bold text-blue-600 text-xl leading-7">promptEval</div>
             </div>
 
-            <nav class="flex items-center gap-8" role="navigation" aria-label="Main navigation">
-                <!-- Use ONLY routerLink to avoid full reloads -->
-                <a *ngFor="let item of items" [routerLink]="item.href" routerLinkActive="text-blue-900"
-                    [routerLinkActiveOptions]="{ exact: true }"
-                    class="font-medium text-gray-600 text-base leading-6 hover:text-blue-900 transition-colors">
+            <!-- navbar.component.html -->
+            <nav class="mx-auto max-w-[1280px] h-16 px-6 flex items-center gap-6">
+                <a *ngFor="let item of (items ?? []); trackBy: trackByHref" [routerLink]="item.href"
+                    routerLinkActive="text-blue-900" [routerLinkActiveOptions]="{ exact: true }"
+                    class="font-medium text-gray-600 hover:text-blue-900 transition-colors">
                     {{ item.label }}
                 </a>
             </nav>
         </div>
 
-        <button type="button" class="inline-flex h-fit items-center justify-center px-4 py-2 bg-blue-600 
-                   hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+        <button *ngIf="!authSvc.loggedIn()" type="button" class="inline-flex h-fit items-center justify-center px-4 py-2 bg-blue-600 
+                   hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            routerLink="/login">
             <span class="font-medium text-white text-base leading-6">Sign In</span>
         </button>
     </div>

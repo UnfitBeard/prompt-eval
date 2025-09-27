@@ -12,7 +12,10 @@ import mongoose, { mongo } from 'mongoose';
 const app = express();
 const PORT = Number(process.env.PORT) || 10000;
 
-const allowedOrigins = ['http://localhost:4200'];
+const allowedOrigins = [
+  'http://localhost:4200',
+  'https://prompt-eval-xfmd.vercel.app/',
+];
 
 app.use(
   cors({

@@ -1,11 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, computed, Input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from '../../Services/auth.service';
 
 export type NavItem = {
   label: string;
   href: string;
+  requiresAuth?: boolean;
+  guestOnly?: boolean;
 };
 
 @Component({
@@ -15,12 +18,16 @@ export type NavItem = {
   styleUrl: './navbar.component.css',
 })
 export class NavbarComponent {
-  @Input() items: NavItem[] = [];
+  @Input({ required: true }) items: NavItem[] = [];
+  trackByHref = (_: number, it: NavItem) => it.href;
+  constructor(public authSvc: AuthService) {}
 
-  navigationItems: NavItem[] = [
-    { label: 'Dashboard', href: '/dashboard' },
-    { label: 'Prompt evaluation page', href: '/prompt-evaluation' },
-    { label: 'Templates', href: '/user-templates' },
-    { label: 'Settings', href: '/settings' },
-  ];
+  visibleItems = computed(() =>
+    this.items.filter((i) => {
+      const logged = this.authSvc.loggedIn();
+      if (i.requiresAuth && !logged) return false;
+      if (i.guestOnly && logged) return false;
+      return true;
+    })
+  );
 }

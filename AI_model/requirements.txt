@@ -6,3 +6,4 @@ protobuf
 scikit-learn
 joblib
 numpy
+gunicorn

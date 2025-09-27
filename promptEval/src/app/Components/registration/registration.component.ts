@@ -9,7 +9,7 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { Router, RouteReuseStrategy } from '@angular/router';
+import { Router, RouteReuseStrategy, RouterLink } from '@angular/router';
 import { AuthService } from '../../Services/auth.service';
 
 function matchPassword(group: AbstractControl): ValidationErrors | null {
@@ -20,7 +20,7 @@ function matchPassword(group: AbstractControl): ValidationErrors | null {
 
 @Component({
   selector: 'app-registration',
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './registration.component.html',
   styleUrl: './registration.component.css',
 })

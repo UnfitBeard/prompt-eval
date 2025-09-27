@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { computed, Injectable, signal } from '@angular/core';
 import { Observable, of, shareReplay, tap } from 'rxjs';
 
 interface LoginResponse {
@@ -56,6 +56,7 @@ export class AuthService {
       .pipe(
         tap((response) => {
           localStorage.setItem('access_token', response.token.accessToken);
+          this._loggedIn.set(true);
         }),
         shareReplay(1) //caching last emission far late subscribers
       );
@@ -63,6 +64,7 @@ export class AuthService {
 
   logout() {
     this.clearToken;
+    this._loggedIn.set(false);
   }
 
   get token(): String | null {
@@ -72,4 +74,7 @@ export class AuthService {
   clearToken() {
     localStorage.removeItem('access_token');
   }
+
+  private _loggedIn = signal<boolean>(!!localStorage.getItem('accessToken'));
+  loggedIn = computed(() => this._loggedIn());
 }

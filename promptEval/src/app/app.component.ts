@@ -1,13 +1,21 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, signal } from '@angular/core';
+import {
+  ActivatedRoute,
+  NavigationEnd,
+  Router,
+  RouterOutlet,
+} from '@angular/router';
 import { PromptEvaluationComponent } from './Components/prompt-evaluation/prompt-evaluation.component';
 import { UserTemplatesComponent } from './Components/user-templates/user-templates.component';
 import { NavbarComponent, NavItem } from './Components/navbar/navbar.component';
 import { FooterComponent } from './Components/footer/footer.component';
+import { filter } from 'rxjs';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, NavbarComponent, FooterComponent],
+  imports: [RouterOutlet, NavbarComponent, FooterComponent, CommonModule],
+  standalone: true,
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
@@ -20,4 +28,19 @@ export class AppComponent {
     { label: 'Templates', href: '/user-templates' },
     { label: 'Settings', href: '/settings' },
   ];
+
+  showNavbar = signal(true);
+  showFooter = signal(false);
+
+  constructor(private router: Router, private ar: ActivatedRoute) {
+    this.router.events
+      .pipe(filter((e) => e instanceof NavigationEnd))
+      .subscribe(() => {
+        let r = this.ar.firstChild;
+        while (r?.firstChild) r = r.firstChild;
+        const data = r?.snapshot.data ?? {};
+        this.showNavbar.set(!data['hideNavbar']);
+        this.showFooter.set(!data['hideFooter']);
+      });
+  }
 }

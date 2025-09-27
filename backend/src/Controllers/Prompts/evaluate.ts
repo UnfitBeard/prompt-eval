@@ -10,7 +10,7 @@ dotenv.config();
 const EVALUATION_SERVICE_URL =
   process.env.EVALUATION_SERVICE_URL ?? 'http://localhost:5000/get-results';
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL ?? 'gemini-1.5-flash';
+const GEMINI_MODEL = process.env.GEMINI_MODEL ?? 'gemini-2.0-flash';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 if (!GEMINI_API_KEY) {
