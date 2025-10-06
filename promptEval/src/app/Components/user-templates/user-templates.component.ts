@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Clipboard, ClipboardModule } from '@angular/cdk/clipboard';
 import {
   PromptsResponse,
   TemplatesService,
@@ -11,15 +12,19 @@ type TemplateCard = {
   title: string;
   description: string;
   domain: string;
+  content: string;
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
   rating: number; // 0..5
   uses: number;
 };
 
+type Difficulty = 'Beginner' | 'Intermediate' | 'Advanced';
+
 @Component({
   selector: 'app-user-templates',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ClipboardModule],
   templateUrl: './user-templates.component.html',
+  standalone: true,
   styleUrl: './user-templates.component.css',
 })
 export class UserTemplatesComponent {
@@ -41,7 +46,10 @@ export class UserTemplatesComponent {
   // Mock cards matching the screenshot
   cards: TemplateCard[] = [];
 
-  constructor(private templateService: TemplatesService) {}
+  constructor(
+    private templateService: TemplatesService,
+    private clipboard: Clipboard
+  ) {}
 
   get filteredCards(): TemplateCard[] {
     return this.cards
@@ -65,6 +73,13 @@ export class UserTemplatesComponent {
       );
   }
 
+  toggleDifficulty(value: Difficulty) {
+    // immutable update recommended
+    const next = new Set(this.filters.difficulty);
+    next.has(value) ? next.delete(value) : next.add(value);
+    this.filters.difficulty = next;
+  }
+
   toggleSet<T>(set: Set<T>, value: T) {
     set.has(value) ? set.delete(value) : set.add(value);
   }
@@ -74,30 +89,13 @@ export class UserTemplatesComponent {
     this.copied = true;
     setTimeout(() => (this.copied = false), 2000);
   }
-
-  private fallbackCopy(text: string) {
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.position = 'fixed';
-    ta.style.left = '-9999px';
-    document.body.appendChild(ta);
-    ta.focus();
-    ta.select();
+  async copyTemplate(title: string, content: string) {
+    const text = `${title}\n\n${content}`;
     try {
-      document.execCommand('copy');
-      this.flashCopied();
-    } finally {
-      document.body.removeChild(ta);
-    }
-  }
-  copyTemplate(title: string, description: string) {
-    const text = `${title}\n\n${description}`;
-    if (navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(text).then(() => {
-        this.flashCopied();
-      });
-    } else {
-      this.fallbackCopy(text);
+      const ok = this.clipboard.copy(text);
+      if (ok) this.flashCopied();
+    } catch (err) {
+      console.warn('clipboard copy failed', err);
     }
   }
 
@@ -122,6 +120,7 @@ export class UserTemplatesComponent {
       description:
         tpl.description ?? 'No description available for this template.',
       domain: this.formatDomain(tpl.domain),
+      content: tpl.content,
       difficulty: tpl.difficulty as TemplateCard['difficulty'], // ✅ cast
       rating: tpl.stats.avgScore || 0, // backend avgScore is 0..10, UI wants stars (0..5 or 0..10)
       uses: tpl.stats.uses,
