@@ -14,7 +14,7 @@ const PORT = Number(process.env.PORT) || 10000;
 
 const allowedOrigins = [
   'http://localhost:4200',
-  'https://prompt-eval-xfmd.vercel.app/',
+  'https://prompt-eval-xfmd.vercel.app',
 ];
 
 app.use(

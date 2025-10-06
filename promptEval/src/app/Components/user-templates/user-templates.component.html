@@ -49,8 +49,7 @@
                 <div>
                     <div class="text-gray-500 mb-2 uppercase tracking-wide text-[11px]">Difficulty Level</div>
                     <label class="flex items-center gap-2 cursor-pointer mb-1">
-                        <input type="checkbox" class="accent-brand-600"
-                            (change)="toggleSet(filters.difficulty, 'Beginner')" />
+                        <input type="checkbox" class="accent-brand-600" (change)="toggleDifficulty('Beginner')" />
                         <span>Beginner</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer mb-1">
@@ -126,7 +125,7 @@
                     <div class="mt-3 flex items-center justify-between text-sm text-gray-600">
                         <div class="flex items-center gap-1">
                             <svg class="h-4 w-4 text-yellow-500" viewBox="0 0 24 24" fill="currentColor"
-                                (click)="copyTemplate(c.title, c.description)">
+                                (click)="copyTemplate(c.title, c.content)">
                                 <path
                                     d="M12 17.27 18.18 21 16.54 13.97 22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z" />
                             </svg>
