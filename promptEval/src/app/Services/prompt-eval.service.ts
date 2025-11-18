@@ -28,11 +28,19 @@ export interface EvaluateResponse {
 }
 
 export interface ScoresResponse {
-  Clarity: number | null;
-  Context: number | null;
-  Creativity: number | null;
-  Relevance: number | null;
-  Specificity: number | null;
+  scores: {
+    final_scores: {
+      clarity: number | null;
+      context: number | null;
+      creativity: number | null;
+      relevance: number | null;
+      specificity: number | null;
+    };
+  };
+  llm_evaluation: {
+    suggestions: Suggestion[];
+    rewriteVersions: RewriteVersion[];
+  };
 }
 
 /** Response shape from /api/recommendations */
@@ -48,7 +56,7 @@ export interface RecommendationsResponse {
 })
 export class PromptEvalService {
   private http = inject(HttpClient);
-  private baseUrl = 'http://localhost:10000/api/v1/prompts';
+  private baseUrl = 'http://localhost:8000';
 
   evaluatePrompt(prompt: string): Observable<EvaluateResponse> {
     return this.http
@@ -58,7 +66,7 @@ export class PromptEvalService {
 
   getPromptScores(prompt: string): Observable<ScoresResponse> {
     return this.http
-      .post<ScoresResponse>(`${this.baseUrl}/get-results`, { prompt })
+      .post<ScoresResponse>(`${this.baseUrl}/process_prompt`, { prompt })
       .pipe(catchError(this.handle));
   }
 

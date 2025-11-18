@@ -89,6 +89,7 @@ export class UserTemplatesComponent {
     this.copied = true;
     setTimeout(() => (this.copied = false), 2000);
   }
+  
   async copyTemplate(title: string, content: string) {
     const text = `${title}\n\n${content}`;
     try {

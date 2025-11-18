@@ -1,0 +1,18 @@
+{
+  "embedder_name": "sentence-transformers/all-MiniLM-L6-v2",
+  "targets": ["clarity", "context", "relevance", "specificity", "creativity"],
+  "alpha": 0.3,
+  "val_metrics": {
+    "alpha": 0.3,
+    "MAE_macro": 0.540597294242821,
+    "RMSE_macro": 0.6479939716979144
+  },
+  "version": "ridge-v2-feats",
+  "feature_spec": [
+    "length_norm",
+    "unique_ratio",
+    "has_digits",
+    "has_detail",
+    "gen_ratio"
+  ]
+}

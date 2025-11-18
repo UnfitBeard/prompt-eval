@@ -74,11 +74,11 @@ export class PromptEvaluationComponent {
 
   private mapScores(resp: ScoresResponse) {
     const mapping: Record<string, number | null | undefined> = {
-      Clarity: resp.Clarity,
-      Context: resp.Context,
-      Creativity: resp.Creativity,
-      Specificity: resp.Specificity,
-      Relevance: resp.Relevance,
+      Clarity: resp.scores.final_scores.clarity,
+      Context: resp.scores.final_scores.context,
+      Creativity: resp.scores.final_scores.creativity,
+      Specificity: resp.scores.final_scores.specificity,
+      Relevance: resp.scores.final_scores.relevance,
     };
 
     this.evaluationScores = this.evaluationScores.map((row) => ({
@@ -86,18 +86,20 @@ export class PromptEvaluationComponent {
       score: this.toTenFmt(mapping[row.label]),
     }));
     this.overallScore = this.avg([
-      resp.Clarity,
-      resp.Context,
-      resp.Relevance,
-      resp.Specificity,
-      resp.Creativity,
+      resp.scores.final_scores.clarity,
+      resp.scores.final_scores.context,
+      resp.scores.final_scores.relevance,
+      resp.scores.final_scores.specificity,
+      resp.scores.final_scores.creativity,
     ]);
   }
 
-  private mapRecommendation(resp: EvaluateResponse) {
-    this.suggestions = Array.isArray(resp.suggestions) ? resp.suggestions : [];
-    this.rewriteVersions = Array.isArray(resp.rewriteVersions)
-      ? resp.rewriteVersions
+  private mapRecommendation(resp: ScoresResponse) {
+    this.suggestions = Array.isArray(resp.llm_evaluation?.suggestions)
+      ? resp.llm_evaluation.suggestions
+      : [];
+    this.rewriteVersions = Array.isArray(resp.llm_evaluation?.rewriteVersions)
+      ? resp.llm_evaluation.rewriteVersions
       : [];
   }
 
@@ -137,21 +139,12 @@ export class PromptEvaluationComponent {
 
   handleResultsAndRecommendations = async (prompt: string) => {
     this.svc
-      .getPromptScores(prompt)
-      .pipe(
-        map((resp) => {
-          this.mapScores(resp);
-          return prompt;
-        }),
-        switchMap((p) => this.svc.evaluatePrompt(p))
-      )
+      .getPromptScores(prompt) // Observable<ScoresResponse>
       .subscribe({
-        next: (resp) => {
+        next: (resp: ScoresResponse) => {
+          console.log('Scores response:', resp);
+          this.mapScores(resp);
           this.mapRecommendation(resp);
-          if (resp._error) {
-            this.errorMsg =
-              'Model result was not strictly JSON; showing partial results';
-          }
           this.loading = false;
         },
         error: (err) => {

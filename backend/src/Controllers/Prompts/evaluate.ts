@@ -191,6 +191,16 @@ export async function evaluate(
         .status(400)
         .json({ error: "Missing or invalid 'prompt' in request body" });
     }
+    const isPrompt = await model.invoke(
+      `
+      Is this a prompt or is the guy just joking around.${prompt} Return response in this format if true: { value: "True" } and if false { value: "False" }
+      `
+    );
+    console.log(isPrompt);
+
+    if ((isPrompt as any).value == 'True') {
+      return res.status(401).json('This aint a prompt son');
+    }
     const evaluation = await evaluatePromptWithGemini(prompt);
     return res.status(200).json(evaluation);
   } catch (err) {
@@ -267,6 +277,37 @@ export const evaluatePromptWithMyFlaskAI = async (
   }
 
   try {
+    // const isPromptRaw = await model.invoke(`
+    //   Is this a prompt or just joking around: "${prompt}"?
+    //   Return ONLY valid JSON in this format: { "value": "True" } if it's a prompt, or { "value": "False" } if not.
+    // `);
+
+    // let rawText = isPromptRaw.content as string;
+
+    // // Remove ```json ... ``` if present
+    // rawText = rawText.replace(/^```json\s*|```$/g, '').trim();
+
+    // console.log(rawText);
+    // let isPrompt: { value: string } = { value: 'False' };
+
+    // try {
+    //   isPrompt = JSON.parse(rawText);
+    //   console.log(isPrompt);
+    // } catch (err) {
+    //   console.warn(
+    //     'Failed to parse model response, falling back to string check',
+    //     err
+    //   );
+    //   if (rawText.includes('True')) {
+    //     isPrompt.value = 'True';
+    //   }
+    // }
+
+    // // Now you can safely check
+    // if (isPrompt.value === 'False') {
+    //   return res.status(401).json("This ain't a prompt, son!");
+    // }
+
     const result = await fetch('http://localhost:5000/evaluate', {
       method: 'POST',
       headers: {
