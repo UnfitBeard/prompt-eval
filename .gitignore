@@ -211,3 +211,4 @@ dmypy.json
 
 # macOS
 .DS_Store
+promptrag/promptset.csv
