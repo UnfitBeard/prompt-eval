@@ -1,0 +1,706 @@
+{
+    "prompt": "Create an app\n",
+    "scores": {
+        "base_scores": {
+            "clarity": 10,
+            "context": 10,
+            "relevance": 10,
+            "specificity": 10,
+            "creativity": 9.9
+        },
+        "final_scores": {
+            "clarity": 9.1,
+            "context": 9.1,
+            "relevance": 9.1,
+            "specificity": 9.1,
+            "creativity": 9
+        }
+    },
+    "top_rag_prompts": [
+        {
+            "content": "SYSTEM: You are an AI assistant trained to categorize user feedback into predefined categories, along with sentiment analysis for each category. Your goal is to analyze each piece of feedback, assign the most relevant categories, and determine the sentiment (positive, negative, or neutral) associated with each category based on the feedback content. Predefined Categories: Product Features and Functionality Core Features Add-ons and Integrations Customization and Configuration User Experience and Design Ease of Use Navigation and Discoverability Visual Design and Aesthetics Accessibility Performance and Reliability Speed and Responsiveness Uptime and Availability Scalability Bug Fixes and Error Handling Customer Support and Service Responsiveness and Availability Knowledge and Expertise Issue Resolution and Follow-up Self-Service Resources Billing, Pricing, and Licensing Pricing Model and Tiers Billing Processes and Invoicing License Management Upgrades and Renewals Security, Compliance, and Privacy Data Protection and Confidentiality Access Control and Authentication Regulatory Compliance Incident Response and Monitoring Mobile and Cross-Platform Compatibility Mobile App",
+            "metadata": {
+                "parent_row": "dcb6dca7d304287351706cb6ea5acd9755c3143f",
+                "source_url": "https://platform.claude.com/docs/en/resources/prompt-library/review-classifier",
+                "page_title": "Review classifier - Claude Docs",
+                "prompt_preview": "SYSTEM: You are an AI assistant trained to categorize user feedback into predefined categories, along with sentiment analysis for each category. Your goal is to analyze each piece of feedback, assign the most relevant categories, and determine the sentiment (positive, negative, or neutral) associated with each category based on the feedback content. Predefined Categories: Product Features and Func",
+                "chunk_index": 0,
+                "was_trimmed": false,
+                "is_code_like": false
+            },
+            "distance": 1.0829010009765625
+        },
+        {
+            "content": "SYSTEM: Your task is to generate a series of thoughtful, open-ended questions for an interview based on the given context. The questions should be designed to elicit insightful and detailed responses from the interviewee, allowing them to showcase their knowledge, experience, and critical thinking skills. Avoid yes/no questions or those with obvious answers. Instead, focus on questions that encourage reflection, self-assessment, and the sharing of specific examples or anecdotes.. USER: You are interviewing a candidate for a marketing manager position at a well-established e-commerce company. The ideal candidate should have experience developing and executing multi-channel marketing campaigns, strong analytical skills, and the ability to collaborate effectively with cross-functional teams. They should also be passionate about staying up-to-date with the latest marketing trends and technologies.",
+            "metadata": {
+                "parent_row": "3851596188a62c0d15d7665e3af2d9fb4b6bbd1e",
+                "source_url": "https://platform.claude.com/docs/en/resources/prompt-library/interview-question-crafter",
+                "page_title": "Interview question crafter - Claude Docs",
+                "prompt_preview": "SYSTEM: Your task is to generate a series of thoughtful, open-ended questions for an interview based on the given context. The questions should be designed to elicit insightful and detailed responses from the interviewee, allowing them to showcase their knowledge, experience, and critical thinking skills. Avoid yes/no questions or those with obvious answers. Instead, focus on questions that encour",
+                "chunk_index": 0,
+                "was_trimmed": false,
+                "is_code_like": false
+            },
+            "distance": 1.2749497890472412
+        },
+        {
+            "content": "out with questions. Overall, it's a great tool, but there's definitely room for improvement in terms of mobile compatibility and third-party integrations.",
+            "metadata": {
+                "parent_row": "dcb6dca7d304287351706cb6ea5acd9755c3143f",
+                "source_url": "https://platform.claude.com/docs/en/resources/prompt-library/review-classifier",
+                "page_title": "Review classifier - Claude Docs",
+                "prompt_preview": "SYSTEM: You are an AI assistant trained to categorize user feedback into predefined categories, along with sentiment analysis for each category. Your goal is to analyze each piece of feedback, assign the most relevant categories, and determine the sentiment (positive, negative, or neutral) associated with each category based on the feedback content. Predefined Categories: Product Features and Func",
+                "chunk_index": 2,
+                "was_trimmed": false,
+                "is_code_like": false
+            },
+            "distance": 1.3007457256317139
+        },
+        {
+            "content": "SYSTEM: Your task is to create a comprehensive, engaging, and well-structured lesson plan on the given subject. The lesson plan should be designed for a 60-minute class session and should cater to a specific grade level or age group. Begin by stating the lesson objectives, which should be clear, measurable, and aligned with relevant educational standards. Next, provide a detailed outline of the lesson, breaking it down into an introduction, main activities, and a conclusion. For each section, describe the teaching methods, learning activities, and resources you will use to effectively convey the content and engage the students. Finally, describe the assessment methods you will employ to evaluate students' understanding and mastery of the lesson objectives. The lesson plan should be well-organized, easy to follow, and promote active learning and critical thinking.. USER: Subject: Introduction to Photosynthesis Grade Level: 7th Grade (Ages 12-13)",
+            "metadata": {
+                "parent_row": "0547c88c0c1df618529d19dab1b6debe197b51e9",
+                "source_url": "https://platform.claude.com/docs/en/resources/prompt-library/lesson-planner",
+                "page_title": "Lesson planner - Claude Docs",
+                "prompt_preview": "SYSTEM: Your task is to create a comprehensive, engaging, and well-structured lesson plan on the given subject. The lesson plan should be designed for a 60-minute class session and should cater to a specific grade level or age group. Begin by stating the lesson objectives, which should be clear, measurable, and aligned with relevant educational standards. Next, provide a detailed outline of the le",
+                "chunk_index": 0,
+                "was_trimmed": false,
+                "is_code_like": false
+            },
+            "distance": 1.4131561517715454
+        },
+        {
+            "content": "SYSTEM: Your task is to explore a science fiction scenario and discuss the potential challenges and considerations that may arise. Briefly describe the scenario, identify the key technological, social, or ethical issues involved, and encourage the user to share their thoughts on how these challenges might be addressed.. USER: A future where humans can upload their consciousness into a digital realm.",
+            "metadata": {
+                "parent_row": "a1724057eb113743afcbbcde868257fab0949785",
+                "source_url": "https://platform.claude.com/docs/en/resources/prompt-library/sci-fi-scenario-simulator",
+                "page_title": "Sci-fi scenario simulator - Claude Docs",
+                "prompt_preview": "SYSTEM: Your task is to explore a science fiction scenario and discuss the potential challenges and considerations that may arise. Briefly describe the scenario, identify the key technological, social, or ethical issues involved, and encourage the user to share their thoughts on how these challenges might be addressed.. USER: A future where humans can upload their consciousness into a digital real",
+                "chunk_index": 0,
+                "was_trimmed": false,
+                "is_code_like": false
+            },
+            "distance": 1.421025276184082
+        }
+    ],
+    "llm_raw": "```json\n{\n  \"clarity\": 8.0,\n  \"context\": 7.0,\n  \"relevance\": 9.0,\n  \"specificity\": 7.0,\n  \"creativity\": 6.0,\n  \"suggestions\": [\n    {\n      \"text\": \"Provide a specific example of an app to be designed (e.g., a fitness tracker, a social media app, etc.) to make the prompt more concrete.\"\n    },\n    {\n      \"text\": \"Add constraints, such as time limits, budget, or team size, to make the task more realistic.\"\n    },\n    {\n      \"text\": \"Specify the level of detail expected in the 'detailed specification'.\"\n    }\n  ],\n  \"rewriteVersions\": [\n    {\n      \"title\": \"Enhanced Version\",\n      \"content\": \"You are a software developer tasked with creating a mobile fitness tracking application called 'FitLife'. The target audience is young adults (18-35) interested in improving their physical health. Key features include step tracking, workout logging, calorie counting, and social sharing. Outline the user interface, including wireframes for the main screens (dashboard, workout log, profile). Specify the technologies and platforms you plan to use (e.g., React Native, iOS, Android). Provide a detailed specification for the app, including data models, API endpoints, and error handling strategies. Assume a development timeline of 3 months and a budget of $50,000.\",\n      \"improvements\": [\n        {\n          \"text\": \"Provides a concrete example (fitness tracker).\"\n        },\n        {\n          \"text\": \"Adds more specific details about the target audience and key features.\"\n        },\n        {\n          \"text\": \"Includes constraints like timeline and budget.\"\n        }\n      ]\n    },\n    {\n      \"title\": \"Alternative Version\",\n      \"content\": \"Imagine you are leading a team developing a mobile application for a local library. The app should allow users to search for books, reserve items, manage their account, and receive notifications about upcoming events. Describe the app's purpose, target audience (library patrons of all ages), and key features. Outline the user interface, focusing on accessibility and ease of use. Specify the technologies and platforms you plan to use, considering factors like cost and maintainability. Provide a detailed specification for the app, including database schema, security considerations, and testing procedures.\",\n      \"improvements\": [\n        {\n          \"text\": \"Presents a different application domain (library app).\"\n        },\n        {\n          \"text\": \"Emphasizes accessibility and ease of use in the UI design.\"\n        },\n        {\n          \"text\": \"Highlights cost and maintainability as factors in technology selection.\"\n        }\n      ]\n    },\n    {\n      \"title\": \"Minimalist Version\",\n      \"content\": \"You are designing a mobile app. Define its purpose, target users, and three key features. Briefly describe the UI and chosen platform. Provide a high-level specification.\",\n      \"improvements\": [\n        {\n          \"text\": \"Simplifies the prompt to focus on the essentials.\"\n        },\n        {\n          \"text\": \"Reduces the scope by limiting the number of key features.\"\n        },\n        {\n          \"text\": \"Specifies a 'high-level' specification, reducing the expected detail.\"\n        }\n      ]\n    }\n  ]\n}\n```",
+    "llm_evaluation": {
+        "clarity": 8,
+        "context": 7,
+        "relevance": 9,
+        "specificity": 7,
+        "creativity": 6,
+        "suggestions": [
+            {
+                "text": "Provide a specific example of an app to be designed (e.g., a fitness tracker, a social media app, etc.) to make the prompt more concrete."
+            },
+            {
+                "text": "Add constraints, such as time limits, budget, or team size, to make the task more realistic."
+            },
+            {
+                "text": "Specify the level of detail expected in the 'detailed specification'."
+            }
+        ],
+        "rewriteVersions": [
+            {
+                "title": "Enhanced Version",
+                "content": "You are a software developer tasked with creating a mobile fitness tracking application called 'FitLife'. The target audience is young adults (18-35) interested in improving their physical health. Key features include step tracking, workout logging, calorie counting, and social sharing. Outline the user interface, including wireframes for the main screens (dashboard, workout log, profile). Specify the technologies and platforms you plan to use (e.g., React Native, iOS, Android). Provide a detailed specification for the app, including data models, API endpoints, and error handling strategies. Assume a development timeline of 3 months and a budget of $50,000.",
+                "improvements": [
+                    {
+                        "text": "Provides a concrete example (fitness tracker)."
+                    },
+                    {
+                        "text": "Adds more specific details about the target audience and key features."
+                    },
+                    {
+                        "text": "Includes constraints like timeline and budget."
+                    }
+                ]
+            },
+            {
+                "title": "Alternative Version",
+                "content": "Imagine you are leading a team developing a mobile application for a local library. The app should allow users to search for books, reserve items, manage their account, and receive notifications about upcoming events. Describe the app's purpose, target audience (library patrons of all ages), and key features. Outline the user interface, focusing on accessibility and ease of use. Specify the technologies and platforms you plan to use, considering factors like cost and maintainability. Provide a detailed specification for the app, including database schema, security considerations, and testing procedures.",
+                "improvements": [
+                    {
+                        "text": "Presents a different application domain (library app)."
+                    },
+                    {
+                        "text": "Emphasizes accessibility and ease of use in the UI design."
+                    },
+                    {
+                        "text": "Highlights cost and maintainability as factors in technology selection."
+                    }
+                ]
+            },
+            {
+                "title": "Minimalist Version",
+                "content": "You are designing a mobile app. Define its purpose, target users, and three key features. Briefly describe the UI and chosen platform. Provide a high-level specification.",
+                "improvements": [
+                    {
+                        "text": "Simplifies the prompt to focus on the essentials."
+                    },
+                    {
+                        "text": "Reduces the scope by limiting the number of key features."
+                    },
+                    {
+                        "text": "Specifies a 'high-level' specification, reducing the expected detail."
+                    }
+                ]
+            }
+        ]
+    },
+    "best_result": {
+        "prompt": "You are a software developer tasked with creating a mobile application. Describe the app's purpose, target audience, and key features. Outline the user interface and any specific technologies or platforms you plan to use. Provide a detailed specification for the app.",
+        "base_scores": {
+            "clarity": 10,
+            "context": 10,
+            "relevance": 10,
+            "specificity": 10,
+            "creativity": 9.9
+        },
+        "final_scores": {
+            "clarity": 9.1,
+            "context": 9.1,
+            "relevance": 9.1,
+            "specificity": 9.1,
+            "creativity": 9
+        },
+        "overall_score": 9.08,
+        "top_rag_prompts": [
+            {
+                "content": "SYSTEM: You are an AI assistant trained to categorize user feedback into predefined categories, along with sentiment analysis for each category. Your goal is to analyze each piece of feedback, assign the most relevant categories, and determine the sentiment (positive, negative, or neutral) associated with each category based on the feedback content. Predefined Categories: Product Features and Functionality Core Features Add-ons and Integrations Customization and Configuration User Experience and Design Ease of Use Navigation and Discoverability Visual Design and Aesthetics Accessibility Performance and Reliability Speed and Responsiveness Uptime and Availability Scalability Bug Fixes and Error Handling Customer Support and Service Responsiveness and Availability Knowledge and Expertise Issue Resolution and Follow-up Self-Service Resources Billing, Pricing, and Licensing Pricing Model and Tiers Billing Processes and Invoicing License Management Upgrades and Renewals Security, Compliance, and Privacy Data Protection and Confidentiality Access Control and Authentication Regulatory Compliance Incident Response and Monitoring Mobile and Cross-Platform Compatibility Mobile App",
+                "metadata": {
+                    "parent_row": "dcb6dca7d304287351706cb6ea5acd9755c3143f",
+                    "source_url": "https://platform.claude.com/docs/en/resources/prompt-library/review-classifier",
+                    "page_title": "Review classifier - Claude Docs",
+                    "prompt_preview": "SYSTEM: You are an AI assistant trained to categorize user feedback into predefined categories, along with sentiment analysis for each category. Your goal is to analyze each piece of feedback, assign the most relevant categories, and determine the sentiment (positive, negative, or neutral) associated with each category based on the feedback content. Predefined Categories: Product Features and Func",
+                    "chunk_index": 0,
+                    "was_trimmed": false,
+                    "is_code_like": false
+                },
+                "distance": 1.0829010009765625
+            },
+            {
+                "content": "SYSTEM: Your task is to generate a series of thoughtful, open-ended questions for an interview based on the given context. The questions should be designed to elicit insightful and detailed responses from the interviewee, allowing them to showcase their knowledge, experience, and critical thinking skills. Avoid yes/no questions or those with obvious answers. Instead, focus on questions that encourage reflection, self-assessment, and the sharing of specific examples or anecdotes.. USER: You are interviewing a candidate for a marketing manager position at a well-established e-commerce company. The ideal candidate should have experience developing and executing multi-channel marketing campaigns, strong analytical skills, and the ability to collaborate effectively with cross-functional teams. They should also be passionate about staying up-to-date with the latest marketing trends and technologies.",
+                "metadata": {
+                    "parent_row": "3851596188a62c0d15d7665e3af2d9fb4b6bbd1e",
+                    "source_url": "https://platform.claude.com/docs/en/resources/prompt-library/interview-question-crafter",
+                    "page_title": "Interview question crafter - Claude Docs",
+                    "prompt_preview": "SYSTEM: Your task is to generate a series of thoughtful, open-ended questions for an interview based on the given context. The questions should be designed to elicit insightful and detailed responses from the interviewee, allowing them to showcase their knowledge, experience, and critical thinking skills. Avoid yes/no questions or those with obvious answers. Instead, focus on questions that encour",
+                    "chunk_index": 0,
+                    "was_trimmed": false,
+                    "is_code_like": false
+                },
+                "distance": 1.2749497890472412
+            },
+            {
+                "content": "out with questions. Overall, it's a great tool, but there's definitely room for improvement in terms of mobile compatibility and third-party integrations.",
+                "metadata": {
+                    "parent_row": "dcb6dca7d304287351706cb6ea5acd9755c3143f",
+                    "source_url": "https://platform.claude.com/docs/en/resources/prompt-library/review-classifier",
+                    "page_title": "Review classifier - Claude Docs",
+                    "prompt_preview": "SYSTEM: You are an AI assistant trained to categorize user feedback into predefined categories, along with sentiment analysis for each category. Your goal is to analyze each piece of feedback, assign the most relevant categories, and determine the sentiment (positive, negative, or neutral) associated with each category based on the feedback content. Predefined Categories: Product Features and Func",
+                    "chunk_index": 2,
+                    "was_trimmed": false,
+                    "is_code_like": false
+                },
+                "distance": 1.3007457256317139
+            },
+            {
+                "content": "SYSTEM: Your task is to create a comprehensive, engaging, and well-structured lesson plan on the given subject. The lesson plan should be designed for a 60-minute class session and should cater to a specific grade level or age group. Begin by stating the lesson objectives, which should be clear, measurable, and aligned with relevant educational standards. Next, provide a detailed outline of the lesson, breaking it down into an introduction, main activities, and a conclusion. For each section, describe the teaching methods, learning activities, and resources you will use to effectively convey the content and engage the students. Finally, describe the assessment methods you will employ to evaluate students' understanding and mastery of the lesson objectives. The lesson plan should be well-organized, easy to follow, and promote active learning and critical thinking.. USER: Subject: Introduction to Photosynthesis Grade Level: 7th Grade (Ages 12-13)",
+                "metadata": {
+                    "parent_row": "0547c88c0c1df618529d19dab1b6debe197b51e9",
+                    "source_url": "https://platform.claude.com/docs/en/resources/prompt-library/lesson-planner",
+                    "page_title": "Lesson planner - Claude Docs",
+                    "prompt_preview": "SYSTEM: Your task is to create a comprehensive, engaging, and well-structured lesson plan on the given subject. The lesson plan should be designed for a 60-minute class session and should cater to a specific grade level or age group. Begin by stating the lesson objectives, which should be clear, measurable, and aligned with relevant educational standards. Next, provide a detailed outline of the le",
+                    "chunk_index": 0,
+                    "was_trimmed": false,
+                    "is_code_like": false
+                },
+                "distance": 1.4131561517715454
+            },
+            {
+                "content": "SYSTEM: Your task is to explore a science fiction scenario and discuss the potential challenges and considerations that may arise. Briefly describe the scenario, identify the key technological, social, or ethical issues involved, and encourage the user to share their thoughts on how these challenges might be addressed.. USER: A future where humans can upload their consciousness into a digital realm.",
+                "metadata": {
+                    "parent_row": "a1724057eb113743afcbbcde868257fab0949785",
+                    "source_url": "https://platform.claude.com/docs/en/resources/prompt-library/sci-fi-scenario-simulator",
+                    "page_title": "Sci-fi scenario simulator - Claude Docs",
+                    "prompt_preview": "SYSTEM: Your task is to explore a science fiction scenario and discuss the potential challenges and considerations that may arise. Briefly describe the scenario, identify the key technological, social, or ethical issues involved, and encourage the user to share their thoughts on how these challenges might be addressed.. USER: A future where humans can upload their consciousness into a digital real",
+                    "chunk_index": 0,
+                    "was_trimmed": false,
+                    "is_code_like": false
+                },
+                "distance": 1.421025276184082
+            }
+        ],
+        "llm_raw": "```json\n{\n  \"clarity\": 8.0,\n  \"context\": 7.0,\n  \"relevance\": 9.0,\n  \"specificity\": 7.0,\n  \"creativity\": 6.0,\n  \"suggestions\": [\n    {\n      \"text\": \"Provide a specific example of an app to be designed (e.g., a fitness tracker, a social media app, etc.) to make the prompt more concrete.\"\n    },\n    {\n      \"text\": \"Add constraints, such as time limits, budget, or team size, to make the task more realistic.\"\n    },\n    {\n      \"text\": \"Specify the level of detail expected in the 'detailed specification'.\"\n    }\n  ],\n  \"rewriteVersions\": [\n    {\n      \"title\": \"Enhanced Version\",\n      \"content\": \"You are a software developer tasked with creating a mobile fitness tracking application called 'FitLife'. The target audience is young adults (18-35) interested in improving their physical health. Key features include step tracking, workout logging, calorie counting, and social sharing. Outline the user interface, including wireframes for the main screens (dashboard, workout log, profile). Specify the technologies and platforms you plan to use (e.g., React Native, iOS, Android). Provide a detailed specification for the app, including data models, API endpoints, and error handling strategies. Assume a development timeline of 3 months and a budget of $50,000.\",\n      \"improvements\": [\n        {\n          \"text\": \"Provides a concrete example (fitness tracker).\"\n        },\n        {\n          \"text\": \"Adds more specific details about the target audience and key features.\"\n        },\n        {\n          \"text\": \"Includes constraints like timeline and budget.\"\n        }\n      ]\n    },\n    {\n      \"title\": \"Alternative Version\",\n      \"content\": \"Imagine you are leading a team developing a mobile application for a local library. The app should allow users to search for books, reserve items, manage their account, and receive notifications about upcoming events. Describe the app's purpose, target audience (library patrons of all ages), and key features. Outline the user interface, focusing on accessibility and ease of use. Specify the technologies and platforms you plan to use, considering factors like cost and maintainability. Provide a detailed specification for the app, including database schema, security considerations, and testing procedures.\",\n      \"improvements\": [\n        {\n          \"text\": \"Presents a different application domain (library app).\"\n        },\n        {\n          \"text\": \"Emphasizes accessibility and ease of use in the UI design.\"\n        },\n        {\n          \"text\": \"Highlights cost and maintainability as factors in technology selection.\"\n        }\n      ]\n    },\n    {\n      \"title\": \"Minimalist Version\",\n      \"content\": \"You are designing a mobile app. Define its purpose, target users, and three key features. Briefly describe the UI and chosen platform. Provide a high-level specification.\",\n      \"improvements\": [\n        {\n          \"text\": \"Simplifies the prompt to focus on the essentials.\"\n        },\n        {\n          \"text\": \"Reduces the scope by limiting the number of key features.\"\n        },\n        {\n          \"text\": \"Specifies a 'high-level' specification, reducing the expected detail.\"\n        }\n      ]\n    }\n  ]\n}\n```",
+        "llm_parsed": {
+            "clarity": 8,
+            "context": 7,
+            "relevance": 9,
+            "specificity": 7,
+            "creativity": 6,
+            "suggestions": [
+                {
+                    "text": "Provide a specific example of an app to be designed (e.g., a fitness tracker, a social media app, etc.) to make the prompt more concrete."
+                },
+                {
+                    "text": "Add constraints, such as time limits, budget, or team size, to make the task more realistic."
+                },
+                {
+                    "text": "Specify the level of detail expected in the 'detailed specification'."
+                }
+            ],
+            "rewriteVersions": [
+                {
+                    "title": "Enhanced Version",
+                    "content": "You are a software developer tasked with creating a mobile fitness tracking application called 'FitLife'. The target audience is young adults (18-35) interested in improving their physical health. Key features include step tracking, workout logging, calorie counting, and social sharing. Outline the user interface, including wireframes for the main screens (dashboard, workout log, profile). Specify the technologies and platforms you plan to use (e.g., React Native, iOS, Android). Provide a detailed specification for the app, including data models, API endpoints, and error handling strategies. Assume a development timeline of 3 months and a budget of $50,000.",
+                    "improvements": [
+                        {
+                            "text": "Provides a concrete example (fitness tracker)."
+                        },
+                        {
+                            "text": "Adds more specific details about the target audience and key features."
+                        },
+                        {
+                            "text": "Includes constraints like timeline and budget."
+                        }
+                    ]
+                },
+                {
+                    "title": "Alternative Version",
+                    "content": "Imagine you are leading a team developing a mobile application for a local library. The app should allow users to search for books, reserve items, manage their account, and receive notifications about upcoming events. Describe the app's purpose, target audience (library patrons of all ages), and key features. Outline the user interface, focusing on accessibility and ease of use. Specify the technologies and platforms you plan to use, considering factors like cost and maintainability. Provide a detailed specification for the app, including database schema, security considerations, and testing procedures.",
+                    "improvements": [
+                        {
+                            "text": "Presents a different application domain (library app)."
+                        },
+                        {
+                            "text": "Emphasizes accessibility and ease of use in the UI design."
+                        },
+                        {
+                            "text": "Highlights cost and maintainability as factors in technology selection."
+                        }
+                    ]
+                },
+                {
+                    "title": "Minimalist Version",
+                    "content": "You are designing a mobile app. Define its purpose, target users, and three key features. Briefly describe the UI and chosen platform. Provide a high-level specification.",
+                    "improvements": [
+                        {
+                            "text": "Simplifies the prompt to focus on the essentials."
+                        },
+                        {
+                            "text": "Reduces the scope by limiting the number of key features."
+                        },
+                        {
+                            "text": "Specifies a 'high-level' specification, reducing the expected detail."
+                        }
+                    ]
+                }
+            ]
+        },
+        "iteration": 1
+    },
+    "attempts": [
+        {
+            "prompt": "Create an app\n",
+            "base_scores": {
+                "clarity": 2.7,
+                "context": 3.5,
+                "relevance": 3.8,
+                "specificity": 3.5,
+                "creativity": 3.2
+            },
+            "final_scores": {
+                "clarity": 1,
+                "context": 1,
+                "relevance": 1,
+                "specificity": 1,
+                "creativity": 1
+            },
+            "overall_score": 1,
+            "top_rag_prompts": [
+               ...here],
+            "llm_raw": "```json\n{\n  \"clarity\": 2.0,\n  \"context\": 1.0,\n  \"relevance\": 9.0,\n  \"specificity\": 1.0,\n  \"creativity\": 1.0,\n  \"suggestions\": [\n    {\n      \"text\": \"Specify the type of app (mobile, web, desktop).\"\n    },\n    {\n      \"text\": \"Define the app's purpose and functionality.\"\n    },\n    {\n      \"text\": \"Describe the target audience.\"\n    },\n    {\n      \"text\": \"Outline key features.\"\n    },\n    {\n      \"text\": \"Mention the platform (iOS, Android, web, etc.).\"\n    },\n    {\n      \"text\": \"Add input/output examples.\"\n    },\n    {\n      \"text\": \"Specify language/runtime and constraints.\"\n    }\n  ],\n  \"rewriteVersions\": [\n    {\n      \"title\": \"Enhanced Version\",\n      \"content\": \"Create a mobile app for iOS and Android that helps users track their daily water intake. The app should allow users to set daily goals, log their water consumption, and receive reminders to drink water throughout the day. Include features like customizable notifications, progress tracking with charts, and integration with health apps.\",\n      \"improvements\": [\n        {\n          \"text\": \"Provides specific details about the app's purpose, platform, and features.\"\n        }\n      ]\n    },\n    {\n      \"title\": \"Alternative Version\",\n      \"content\": \"Develop a web application using React and Node.js that allows users to create and share collaborative playlists. The app should enable users to search for songs, add them to playlists, invite friends to collaborate, and listen to the playlists together in real-time. Consider features like user authentication, playlist recommendations, and social sharing.\",\n      \"improvements\": [\n        {\n          \"text\": \"Offers a different app idea with a focus on web development and specific technologies.\"\n        }\n      ]\n    },\n    {\n      \"title\": \"Minimalist Version\",\n      \"content\": \"Create a simple command-line application in Python that converts temperatures between Celsius and Fahrenheit. The application should take a temperature value and unit as input and output the converted temperature in the other unit.\",\n      \"improvements\": [\n        {\n          \"text\": \"Presents a very basic app idea suitable for beginners.\"\n        }\n      ]\n    }\n  ]\n}\n```",
+            "llm_parsed": {
+                "clarity": 2,
+                "context": 1,
+                "relevance": 9,
+                "specificity": 1,
+                "creativity": 1,
+                "suggestions": [
+                    {
+                        "text": "Specify the type of app (mobile, web, desktop)."
+                    },
+                    {
+                        "text": "Define the app's purpose and functionality."
+                    },
+                    {
+                        "text": "Describe the target audience."
+                    },
+                    {
+                        "text": "Outline key features."
+                    },
+                    {
+                        "text": "Mention the platform (iOS, Android, web, etc.)."
+                    },
+                    {
+                        "text": "Add input/output examples."
+                    },
+                    {
+                        "text": "Specify language/runtime and constraints."
+                    }
+                ],
+                "rewriteVersions": [
+                   ...here]
+            },
+            "iteration": 0
+        },
+        {
+            "auto_fix_generated": true,
+            "improve_raw": "```json\n{\n  \"rating\": 7,\n  \"improved_prompt\": \"You are a software developer tasked with creating a mobile application. Describe the app's purpose, target audience, and key features. Outline the user interface and any specific technologies or platforms you plan to use. Provide a detailed specification for the app.\",\n  \"explanation\": \"The original prompt was too vague. I've added context, specified the desired output (a detailed specification), and included key elements to consider when describing the app, making it a more effective prompt.\"\n}\n```",
+            "improve_parsed": {
+                "rating": 7,
+                "improved_prompt": "You are a software developer tasked with creating a mobile application. Describe the app's purpose, target audience, and key features. Outline the user interface and any specific technologies or platforms you plan to use. Provide a detailed specification for the app.",
+                "explanation": "The original prompt was too vague. I've added context, specified the desired output (a detailed specification), and included key elements to consider when describing the app, making it a more effective prompt."
+            },
+            "chosen_candidate": "You are a software developer tasked with creating a mobile application. Describe the app's purpose, target audience, and key features. Outline the user interface and any specific technologies or platforms you plan to use. Provide a detailed specification for the app.",
+            "chosen_candidate_data": {
+                "base_scores": {
+                    "clarity": 10,
+                    "context": 10,
+                    "relevance": 10,
+                    "specificity": 10,
+                    "creativity": 9.9
+                },
+                "final_scores": {
+                    "clarity": 9.1,
+                    "context": 9.1,
+                    "relevance": 9.1,
+                    "specificity": 9.1,
+                    "creativity": 9
+                },
+                "overall_score": 9.08
+            },
+            "iteration": 0.5
+        },
+        {
+            "prompt": "You are a software developer tasked with creating a mobile application. Describe the app's purpose, target audience, and key features. Outline the user interface and any specific technologies or platforms you plan to use. Provide a detailed specification for the app.",
+            "base_scores": {
+                "clarity": 10,
+                "context": 10,
+                "relevance": 10,
+                "specificity": 10,
+                "creativity": 9.9
+            },
+            "final_scores": {
+                "clarity": 9.1,
+                "context": 9.1,
+                "relevance": 9.1,
+                "specificity": 9.1,
+                "creativity": 9
+            },
+            "overall_score": 9.08,
+            "top_rag_prompts": [
+               ......they are here   ],
+            "llm_raw": "```json\n{\n  \"clarity\": 8.0,\n  \"context\": 7.0,\n  \"relevance\": 9.0,\n  \"specificity\": 7.0,\n  \"creativity\": 6.0,\n  \"suggestions\": [\n    {\n      \"text\": \"Provide a specific example of an app to be designed (e.g., a fitness tracker, a social media app, etc.) to make the prompt more concrete.\"\n    },\n    {\n      \"text\": \"Add constraints, such as time limits, budget, or team size, to make the task more realistic.\"\n    },\n    {\n      \"text\": \"Specify the level of detail expected in the 'detailed specification'.\"\n    }\n  ],\n  \"rewriteVersions\": [\n    {\n      \"title\": \"Enhanced Version\",\n      \"content\": \"You are a software developer tasked with creating a mobile fitness tracking application called 'FitLife'. The target audience is young adults (18-35) interested in improving their physical health. Key features include step tracking, workout logging, calorie counting, and social sharing. Outline the user interface, including wireframes for the main screens (dashboard, workout log, profile). Specify the technologies and platforms you plan to use (e.g., React Native, iOS, Android). Provide a detailed specification for the app, including data models, API endpoints, and error handling strategies. Assume a development timeline of 3 months and a budget of $50,000.\",\n      \"improvements\": [\n        {\n          \"text\": \"Provides a concrete example (fitness tracker).\"\n        },\n        {\n          \"text\": \"Adds more specific details about the target audience and key features.\"\n        },\n        {\n          \"text\": \"Includes constraints like timeline and budget.\"\n        }\n      ]\n    },\n    {\n      \"title\": \"Alternative Version\",\n      \"content\": \"Imagine you are leading a team developing a mobile application for a local library. The app should allow users to search for books, reserve items, manage their account, and receive notifications about upcoming events. Describe the app's purpose, target audience (library patrons of all ages), and key features. Outline the user interface, focusing on accessibility and ease of use. Specify the technologies and platforms you plan to use, considering factors like cost and maintainability. Provide a detailed specification for the app, including database schema, security considerations, and testing procedures.\",\n      \"improvements\": [\n        {\n          \"text\": \"Presents a different application domain (library app).\"\n        },\n        {\n          \"text\": \"Emphasizes accessibility and ease of use in the UI design.\"\n        },\n        {\n          \"text\": \"Highlights cost and maintainability as factors in technology selection.\"\n        }\n      ]\n    },\n    {\n      \"title\": \"Minimalist Version\",\n      \"content\": \"You are designing a mobile app. Define its purpose, target users, and three key features. Briefly describe the UI and chosen platform. Provide a high-level specification.\",\n      \"improvements\": [\n        {\n          \"text\": \"Simplifies the prompt to focus on the essentials.\"\n        },\n        {\n          \"text\": \"Reduces the scope by limiting the number of key features.\"\n        },\n        {\n          \"text\": \"Specifies a 'high-level' specification, reducing the expected detail.\"\n        }\n      ]\n    }\n  ]\n}\n```",
+            "llm_parsed": {
+                "clarity": 8,
+                "context": 7,
+                "relevance": 9,
+                "specificity": 7,
+                "creativity": 6,
+                "suggestions": [
+                   .....there
+                ],
+                "rewriteVersions": [
+                    {
+                        "title": "Enhanced Version",
+                        "content": "You are a software developer tasked with creating a mobile fitness tracking application called 'FitLife'. The target audience is young adults (18-35) interested in improving their physical health. Key features include step tracking, workout logging, calorie counting, and social sharing. Outline the user interface, including wireframes for the main screens (dashboard, workout log, profile). Specify the technologies and platforms you plan to use (e.g., React Native, iOS, Android). Provide a detailed specification for the app, including data models, API endpoints, and error handling strategies. Assume a development timeline of 3 months and a budget of $50,000.",
+                        "improvements": [
+                            {
+                                "text": "Provides a concrete example (fitness tracker)."
+                            },
+                            {
+                                "text": "Adds more specific details about the target audience and key features."
+                            },
+                            {
+                                "text": "Includes constraints like timeline and budget."
+                            }
+                        ]
+                    },
+                    {
+                        "title": "Alternative Version",
+                        "content": "Imagine you are leading a team developing a mobile application for a local library. The app should allow users to search for books, reserve items, manage their account, and receive notifications about upcoming events. Describe the app's purpose, target audience (library patrons of all ages), and key features. Outline the user interface, focusing on accessibility and ease of use. Specify the technologies and platforms you plan to use, considering factors like cost and maintainability. Provide a detailed specification for the app, including database schema, security considerations, and testing procedures.",
+                        "improvements": [
+                            {
+                                "text": "Presents a different application domain (library app)."
+                            },
+                            {
+                                "text": "Emphasizes accessibility and ease of use in the UI design."
+                            },
+                            {
+                                "text": "Highlights cost and maintainability as factors in technology selection."
+                            }
+                        ]
+                    },
+                    {
+                        "title": "Minimalist Version",
+                        "content": "You are designing a mobile app. Define its purpose, target users, and three key features. Briefly describe the UI and chosen platform. Provide a high-level specification.",
+                        "improvements": [
+                            {
+                                "text": "Simplifies the prompt to focus on the essentials."
+                            },
+                            {
+                                "text": "Reduces the scope by limiting the number of key features."
+                            },
+                            {
+                                "text": "Specifies a 'high-level' specification, reducing the expected detail."
+                            }
+                        ]
+                    }
+                ]
+            },
+            "iteration": 1
+        }
+    ],
+    "trace": {
+        "start_ts": 1764675286.8603525,
+        "steps": [
+            {
+                "ts": 1764675286.8603616,
+                "step": "received_prompt",
+                "detail": {
+                    "prompt_len": 14
+                }
+            },
+            {
+                "ts": 1764675286.9697878,
+                "step": "initial_rag",
+                "detail": {
+                    "count": 5
+                }
+            },
+            {
+                "ts": 1764675286.9710908,
+                "step": "scoring_start",
+                "detail": {
+                    "iteration": 0,
+                    "prompt_len": 14
+                }
+            },
+            {
+                "ts": 1764675286.990968,
+                "step": "scoring_result",
+                "detail": {
+                    "iteration": 0,
+                    "base_scores": {
+                        "clarity": 2.7,
+                        "context": 3.5,
+                        "relevance": 3.8,
+                        "specificity": 3.5,
+                        "creativity": 3.2
+                    },
+                    "final_scores": {
+                        "clarity": 1,
+                        "context": 1,
+                        "relevance": 1,
+                        "specificity": 1,
+                        "creativity": 1
+                    }
+                }
+            },
+            {
+                "ts": 1764675286.9918418,
+                "step": "scoring_overall",
+                "detail": {
+                    "iteration": 0,
+                    "overall": 1
+                }
+            },
+            {
+                "ts": 1764675287.024856,
+                "step": "rag_retrieved",
+                "detail": {
+                    "iteration": 0,
+                    "count": 5
+                }
+            },
+            {
+                "ts": 1764675293.0404983,
+                "step": "llm_evaluation",
+                "detail": {
+                    "iteration": 0,
+                    "raw": "```json\n{\n  \"clarity\": 2.0,\n  \"context\": 1.0,\n  \"relevance\": 9.0,\n  \"specificity\": 1.0,\n  \"creativity\": 1.0,\n  \"suggestions\": [\n    {\n      \"text\": \"Specify the type of app (mobile, web, desktop).\"\n    },\n    {\n      \"text\": \"Define the app's purpose and functionality.\"\n    },\n    {\n      \"text\": \"Describe the target audience.\"\n    },\n    {\n      \"text\": \"Outline key features.\"\n    },\n    {\n      \"text\": \"Mention the platform (iOS, Android, web, etc.).\"\n    },\n    {\n      \"text\": \"Add input/output examples.\"\n    },\n    {\n      \"text\": \"Specify language/runtime and constraints.\"\n    }\n  ],\n  \"rewriteVersions\": [\n    {\n      \"title\": \"Enhanced Version\",\n      \"content\": \"Create a mobile app for iOS and Android that helps users track their daily water intake. The app should allow users to set daily goals, log their water consumption, and receive reminders to drink water throughout the day. Include features like customizable notifications, progress tracking with charts, and integration with health apps.\",\n      \"improvements\": [\n        {\n          \"text\": \"Provides specific details about the app's purpose, platform, and features.\"\n        }\n      ]\n    },\n    {\n      \"title\": \"Alternative Version\",\n      \"content\": \"Develop a web application using React and Node.js that allows users to create and share collaborative playlists. The app should enable users to search for songs, add them to playlists, invite friends to collaborate, and listen to the playlists together in real-time. Consider features like user authentication, playlist recommendations, and social sharing.\",\n      \"improvements\": [\n        {\n          \"text\": \"Offers a different app idea with a focus on web development and specific technologies.\"\n        }\n      ]\n    },\n    {\n      \"title\": \"Minimalist Version\",\n      \"content\": \"Create a simple command-line application in Python that converts temperatures between Celsius and Fahrenheit. The application should take a temperature value and unit as input and o"
+                }
+            },
+            {
+                "ts": 1764675293.042909,
+                "step": "attempt_recorded",
+                "detail": {
+                    "iteration": 0,
+                    "overall": 1
+                }
+            },
+            {
+                "ts": 1764675293.0429144,
+                "step": "best_updated",
+                "detail": {
+                    "iteration": 0,
+                    "best_overall": 1
+                }
+            },
+            {
+                "ts": 1764675293.0429184,
+                "step": "needs_fix_reason",
+                "detail": {
+                    "iteration": 0,
+                    "reason": "low_score",
+                    "overall": 1
+                }
+            },
+            {
+                "ts": 1764675293.0429432,
+                "step": "needs_fix_reason",
+                "detail": {
+                    "iteration": 0,
+                    "reason": "llm_low_dims",
+                    "avg_dim": 2.8
+                }
+            },
+            {
+                "ts": 1764675293.042947,
+                "step": "improve_request",
+                "detail": {
+                    "iteration": 0
+                }
+            },
+            {
+                "ts": 1764675294.9266653,
+                "step": "improve_response",
+                "detail": {
+                    "iteration": 0,
+                    "raw": "```json\n{\n  \"rating\": 7,\n  \"improved_prompt\": \"You are a software developer tasked with creating a mobile application. Describe the app's purpose, target audience, and key features. Outline the user interface and any specific technologies or platforms you plan to use. Provide a detailed specification for the app.\",\n  \"explanation\": \"The original prompt was too vague. I've added context, specified the desired output (a detailed specification), and included key elements to consider when describing the app, making it a more effective prompt.\"\n}\n```"
+                }
+            },
+            {
+                "ts": 1764675294.9304988,
+                "step": "candidates_extracted",
+                "detail": {
+                    "iteration": 0,
+                    "num_candidates": 1
+                }
+            },
+            {
+                "ts": 1764675295.026697,
+                "step": "candidate_scored",
+                "detail": {
+                    "iteration": 0,
+                    "candidate_index": 0,
+                    "cand_overall": 9.08
+                }
+            },
+            {
+                "ts": 1764675295.0272803,
+                "step": "candidate_chosen",
+                "detail": {
+                    "iteration": 0,
+                    "new_overall": 9.08
+                }
+            },
+            {
+                "ts": 1764675295.0280898,
+                "step": "scoring_start",
+                "detail": {
+                    "iteration": 1,
+                    "prompt_len": 267
+                }
+            },
+            {
+                "ts": 1764675295.0758007,
+                "step": "scoring_result",
+                "detail": {
+                    "iteration": 1,
+                    "base_scores": {
+                        "clarity": 10,
+                        "context": 10,
+                        "relevance": 10,
+                        "specificity": 10,
+                        "creativity": 9.9
+                    },
+                    "final_scores": {
+                        "clarity": 9.1,
+                        "context": 9.1,
+                        "relevance": 9.1,
+                        "specificity": 9.1,
+                        "creativity": 9
+                    }
+                }
+            },
+            {
+                "ts": 1764675295.0778718,
+                "step": "scoring_overall",
+                "detail": {
+                    "iteration": 1,
+                    "overall": 9.08
+                }
+            },
+            {
+                "ts": 1764675295.1255438,
+                "step": "rag_retrieved",
+                "detail": {
+                    "iteration": 1,
+                    "count": 5
+                }
+            },
+            {
+                "ts": 1764675300.4003065,
+                "step": "llm_evaluation",
+                "detail": {
+                    "iteration": 1,
+                    "raw": "```json\n{\n  \"clarity\": 8.0,\n  \"context\": 7.0,\n  \"relevance\": 9.0,\n  \"specificity\": 7.0,\n  \"creativity\": 6.0,\n  \"suggestions\": [\n    {\n      \"text\": \"Provide a specific example of an app to be designed (e.g., a fitness tracker, a social media app, etc.) to make the prompt more concrete.\"\n    },\n    {\n      \"text\": \"Add constraints, such as time limits, budget, or team size, to make the task more realistic.\"\n    },\n    {\n      \"text\": \"Specify the level of detail expected in the 'detailed specification'.\"\n    }\n  ],\n  \"rewriteVersions\": [\n    {\n      \"title\": \"Enhanced Version\",\n      \"content\": \"You are a software developer tasked with creating a mobile fitness tracking application called 'FitLife'. The target audience is young adults (18-35) interested in improving their physical health. Key features include step tracking, workout logging, calorie counting, and social sharing. Outline the user interface, including wireframes for the main screens (dashboard, workout log, profile). Specify the technologies and platforms you plan to use (e.g., React Native, iOS, Android). Provide a detailed specification for the app, including data models, API endpoints, and error handling strategies. Assume a development timeline of 3 months and a budget of $50,000.\",\n      \"improvements\": [\n        {\n          \"text\": \"Provides a concrete example (fitness tracker).\"\n        },\n        {\n          \"text\": \"Adds more specific details about the target audience and key features.\"\n        },\n        {\n          \"text\": \"Includes constraints like timeline and budget.\"\n        }\n      ]\n    },\n    {\n      \"title\": \"Alternative Version\",\n      \"content\": \"Imagine you are leading a team developing a mobile application for a local library. The app should allow users to search for books, reserve items, manage their account, and receive notifications about upcoming events. Describe the app's purpose, target audience (library patrons of all ages), and key features. Outline the user interface, foc"
+                }
+            },
+            {
+                "ts": 1764675300.4018009,
+                "step": "attempt_recorded",
+                "detail": {
+                    "iteration": 1,
+                    "overall": 9.08
+                }
+            },
+            {
+                "ts": 1764675300.4018075,
+                "step": "best_updated",
+                "detail": {
+                    "iteration": 1,
+                    "best_overall": 9.08
+                }
+            },
+            {
+                "ts": 1764675300.4018323,
+                "step": "no_fix_needed",
+                "detail": {
+                    "iteration": 1,
+                    "overall": 9.08
+                }
+            },
+            {
+                "ts": 1764675300.4031837,
+                "step": "process_complete",
+                "detail": {
+                    "best_overall": 9.08
+                }
+            }
+        ],
+        "metrics": {
+            "num_rag_chunks": 15,
+            "num_rewrite_attempts": 1,
+            "num_successful_json_parses": 2,
+            "duration_ms": 13544,
+            "final_overall": 9.08,
+            "num_attempts": 3
+        }
+    },
+    "scorer_version": "ridge-v2-feats"
+}

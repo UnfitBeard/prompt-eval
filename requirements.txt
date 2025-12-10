@@ -1,0 +1,12 @@
+# Add these to your requirements.txt
+beautifulsoup4
+requests
+langchain-chroma
+langchain-google-genai
+langchain-huggingface
+langchain-core
+langchain
+genai
+langchain
+fastAPI
+tiktoken

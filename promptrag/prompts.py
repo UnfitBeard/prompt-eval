@@ -22,6 +22,7 @@ Return JSON ONLY:
 """
 
 
+
 def build_eval_user_message(user_prompt: str, retrieved: List[Dict]) -> str:
     examples_text = ""
     for i, doc in enumerate(retrieved):
@@ -55,7 +56,7 @@ Here are similar high-quality prompts:
 Task:
 1) Provide a numeric rating 0-10.
 2) Return an improved prompt that is clear, contains intent, input/output spec, constraints/examples if needed.
-3) Briefly (1-2 sentences) explain what you changed.
+3) Briefly (2-3 sentences) explain what you changed and the type of prompts e.g zero shot.
 
 Return JSON ONLY in the shape specified in the system prompt.
 """

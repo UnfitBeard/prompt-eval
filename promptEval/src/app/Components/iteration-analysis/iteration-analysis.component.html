@@ -1,0 +1,62 @@
+<div class="p-4 bg-gray-50 min-h-screen">
+    <h1 class="text-2xl font-bold mb-4">Last Trace</h1>
+
+    <div *ngIf="lastTrace; else noTrace">
+        <!-- Prompt -->
+        <section class="mb-4">
+            <h2 class="text-lg font-semibold">Prompt:</h2>
+            <p class="bg-white p-2 rounded border">{{ lastTrace.promptText }}</p>
+        </section>
+
+        <!-- Scores -->
+        <section class="mb-4">
+            <h2 class="text-lg font-semibold">Scores Response:</h2>
+            <div *ngIf="lastTrace.scoresResponse">
+                <h3 class="font-medium">Base Scores:</h3>
+                <pre class="bg-white p-2 rounded border">{{ lastTrace.scoresResponse.scores.base_scores | json }}</pre>
+
+                <h3 class="font-medium">Final Scores:</h3>
+                <pre class="bg-white p-2 rounded border">{{ lastTrace.scoresResponse.scores.final_scores | json }}</pre>
+
+                <h3 class="font-medium">Trace ID:</h3>
+                <p class="font-mono">{{ lastTrace.scoresResponse.trace_id }}</p>
+            </div>
+        </section>
+
+        <!-- Top RAG Prompts -->
+        <section class="mb-4" *ngIf="lastTrace.scoresResponse?.top_rag_prompts?.length">
+            <h2 class="text-lg font-semibold">Top RAG Prompts:</h2>
+            <div *ngFor="let prompt of lastTrace.scoresResponse?.top_rag_prompts; index as i"
+                class="mb-2 p-2 bg-white border rounded">
+                <p><strong>{{ i + 1 }}.</strong> {{ prompt.content }}</p>
+                <small class="text-gray-500">Source: {{ prompt.metadata.source_url }}</small>
+            </div>
+        </section>
+
+        <!-- LLM Evaluation -->
+        <section class="mb-4" *ngIf="lastTrace.llmEvaluation">
+            <h2 class="text-lg font-semibold">LLM Evaluation:</h2>
+            <pre class="bg-white p-2 rounded border">{{ lastTrace.llmEvaluation | json }}</pre>
+        </section>
+
+        <!-- Rewrite Versions -->
+        <section class="mb-4" *ngIf="lastTrace.llmEvaluation?.rewriteVersions?.length">
+            <h2 class="text-lg font-semibold">Rewrite Versions:</h2>
+            <div *ngFor="let version of lastTrace.llmEvaluation.rewriteVersions; index as i"
+                class="mb-2 p-2 bg-white border rounded">
+                <p><strong>{{ version.title }}</strong></p>
+                <p>{{ version.content }}</p>
+                <div *ngIf="version.improvements?.length" class="text-sm text-gray-600 mt-1">
+                    <strong>Improvements:</strong>
+                    <ul>
+                        <li *ngFor="let imp of version.improvements">{{ imp.text }}</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <ng-template #noTrace>
+        <p>No previous trace found.</p>
+    </ng-template>
+</div>

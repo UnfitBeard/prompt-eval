@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import {
@@ -11,6 +11,7 @@ import {
   ScoresResponse,
 } from '../../Services/prompt-eval.service'; // <-- adjust path as needed
 import { map, switchMap } from 'rxjs';
+import { PromptEvalStateService } from '../../Services/prompt-eval-state.service';
 
 interface EvaluationScore {
   label: string;
@@ -24,17 +25,39 @@ interface Improvement {
 
 @Component({
   selector: 'app-prompt-evaluation',
-  imports: [FormsModule, CommonModule, RouterLink],
+  imports: [FormsModule, CommonModule],
   templateUrl: './prompt-evaluation.component.html',
   styleUrl: './prompt-evaluation.component.css',
 })
 export class PromptEvaluationComponent {
+  toggleForms() {
+    this.showForm1 = !this.showForm1;
+  }
+  showForm1: boolean = true;
   private svc = inject(PromptEvalService);
+  private svcState = inject(PromptEvalStateService);
   promptText: string = '';
 
   loading = false;
   errorMsg: string | null = null;
   overallScore: number | null = null;
+
+  // Structured form model
+  form: any = {
+    domain: 'software_engineering',
+    subtype: '',
+    title: '',
+    audience: '',
+    purpose: '',
+    keyPoints: '',
+    outputFormat: 'plain',
+    tech: '',
+    lengthTarget: '',
+    tone: 'neutral',
+    example: '',
+    acceptance: '',
+    constraints: '',
+  };
 
   evaluationScores: EvaluationScore[] = [
     { label: 'Clarity', score: '—', color: 'text-amber-500' },
@@ -47,7 +70,7 @@ export class PromptEvaluationComponent {
 
   rewriteVersions: RewriteVersion[] = [];
 
-  constructor(private router: Router) {}
+  constructor(public router: Router) {}
 
   // helper functions
   get overallScorePct(): number {
@@ -138,6 +161,7 @@ export class PromptEvaluationComponent {
   }
 
   handleResultsAndRecommendations = async (prompt: string) => {
+    console.log(`Sending prompt: ${prompt}`);
     this.svc
       .getPromptScores(prompt) // Observable<ScoresResponse>
       .subscribe({
@@ -145,6 +169,18 @@ export class PromptEvaluationComponent {
           console.log('Scores response:', resp);
           this.mapScores(resp);
           this.mapRecommendation(resp);
+
+          // NEW: persist richer state
+          this.svcState.setLastResponse({
+            promptText: prompt, // raw prompt text you evaluated
+            form: this.form, // structured form content
+            scoresResponse: resp, // server ScoresResponse object
+            retrieved: (resp as any).top_rag_prompts || null, // optional
+            llmEvaluation: (resp as any).llm_evaluation || null,
+            // NEW — capture trace id
+            trace_id: (resp as any).trace_id || null,
+          });
+
           this.loading = false;
         },
         error: (err) => {
@@ -168,14 +204,202 @@ export class PromptEvaluationComponent {
   }
 
   getScorePercentage(score: string): number {
-    const numericScore = parseInt(score.split('/')[0]);
-    return numericScore * 10;
+    const raw = (score || '').split('/')[0];
+    const base = parseFloat(raw);
+    if (!Number.isFinite(base)) return 0;
+    return Math.max(0, Math.min(100, base * 10));
   }
 
   getScoreBarColor(score: string): string {
-    const numericScore = parseInt(score.split('/')[0]);
-    if (numericScore >= 8) return 'bg-green-500';
-    if (numericScore >= 6) return 'bg-amber-500';
+    const raw = (score || '').split('/')[0];
+    const base = parseFloat(raw);
+    if (!Number.isFinite(base)) return 'bg-gray-300';
+    if (base >= 8) return 'bg-green-500';
+    if (base >= 6) return 'bg-amber-500';
+    if (base >= 4) return 'bg-violet-500';
     return 'bg-red-500';
+  }
+
+  /** Build a human-readable prompt from the structured form. */
+  private buildPromptFromForm(): string {
+    const f = this.form;
+    const parts: string[] = [];
+
+    // Header: task and goal
+    parts.push(`Task: ${this.humanReadableSubtype(f.domain, f.subtype)}.`);
+    if (f.title) parts.push(`Title: ${f.title}.`);
+    if (f.purpose) parts.push(`Purpose: ${f.purpose}.`);
+    if (f.audience) parts.push(`Target audience: ${f.audience}.`);
+
+    // Domain & tech
+    parts.push(`Domain: ${this.humanReadableDomain(f.domain)}.`);
+    if (f.tech) parts.push(`Preferred tech/language: ${f.tech}.`);
+
+    // Format & length
+    parts.push(`output format: ${this.formatLabel(f.outputFormat)}.`);
+    if (f.lengthTarget) parts.push(`Length target: ${f.lengthTarget}.`);
+    parts.push(`Tone/style: ${f.tone}.`);
+
+    // Key points and example
+    if (f.keyPoints) parts.push(`key points: ${f.keyPoints}.`);
+    if (f.example) parts.push(`Example input: ${f.example}.`);
+    // Acceptance & constraints
+    if (f.acceptance) {
+      parts.push(`Acceptance criteria: ${f.acceptance}.`);
+    } else {
+      parts.push(``);
+    }
+    if (f.constraints) parts.push(`Constraints: ${f.constraints}.`);
+
+    // // Acceptance & constraints
+    // if (f.acceptance) {
+    //   parts.push(`Acceptance criteria (must be satisfied): ${f.acceptance}.`);
+    // } else {
+    //   parts.push(
+    //     `Acceptance criteria: ensure the output covers all requested sections and keys.`
+    //   );
+    // }
+    // if (f.constraints) parts.push(`Constraints: ${f.constraints}.`);
+
+    // // Instruction for completeness & validation
+    // parts.push(
+    //   'Produce the requested output exactly matching the desired format. ' +
+    //     'Then run a self-check against the acceptance criteria and annotate any missing items. ' +
+    //     'If items are missing, retry once to correct the output. Output the final result only if it passes the acceptance criteria.'
+    // );
+
+    return parts.join(' ');
+  }
+
+  private humanReadableDomain(domain: string): string {
+    switch (domain) {
+      case 'software_engineering':
+        return 'Software engineering';
+      case 'content_creation':
+        return 'Content creation';
+      case 'education':
+        return 'Education';
+      default:
+        return domain || 'General';
+    }
+  }
+
+  private humanReadableSubtype(domain: string, subtype: string): string {
+    // map subtypes to friendly strings
+    const map: any = {
+      software_engineering: {
+        full_stack_app: 'full-stack application (frontend + backend + DB)',
+        backend_api: 'backend API / microservice',
+        cli_tool: 'CLI tool or script',
+        unit_tests: 'unit tests and test plan',
+        refactor_plan: 'refactor plan / architecture notes',
+      },
+      content_creation: {
+        blog_post: 'blog post or article',
+        social_post_series: 'social media post series',
+        video_script: 'video script',
+        newsletter: 'newsletter issue',
+      },
+      education: {
+        lesson_plan: 'lesson plan',
+        quiz: 'quiz with answer key',
+        summary: 'topic summary',
+        exercise_set: 'exercise set with solutions',
+      },
+    };
+    return (map[domain] && map[domain][subtype]) || subtype || 'task';
+  }
+
+  private formatLabel(fmt: string): string {
+    const m: any = {
+      plain: 'Plain text',
+      markdown: 'Markdown',
+      json: 'JSON',
+      html: 'HTML',
+      code: 'Source code',
+    };
+    return m[fmt] || fmt;
+  }
+
+  /** Called by the structured form Evaluate button. */
+  assemblePromptAndEvaluate(): void {
+    let finalPrompt: string = '';
+    if (this.showForm1) {
+      finalPrompt = this.buildPromptFromForm();
+      this.promptText = finalPrompt;
+      // clear old results while loading
+    } else {
+      finalPrompt = this.promptText;
+      this.promptText = finalPrompt;
+    }
+    // clear old results while loading
+    this.loading = true;
+    this.errorMsg = null;
+    this.handleResultsAndRecommendations(finalPrompt);
+  }
+
+  get template() {
+    return this;
+  }
+
+  /** Reset the form to default values. */
+  resetForm(): void {
+    this.form = {
+      domain: 'software_engineering',
+      subtype: 'full_stack_app',
+      title: '',
+      audience: '',
+      purpose: '',
+      keyPoints: '',
+      outputFormat: 'plain',
+      tech: '',
+      lengthTarget: '',
+      tone: 'neutral',
+      example: '',
+      acceptance: '',
+      constraints: '',
+    };
+    this.promptText = '';
+    this.evaluationScores = this.evaluationScores.map((s) => ({
+      ...s,
+      score: '—',
+    }));
+    this.rewriteVersions = [];
+    this.suggestions = [];
+    this.overallScore = null;
+    this.errorMsg = null;
+  }
+
+  ngOnInit() {
+    this.lastTraceId = this.svcState.lastTraceId;
+    const snapshot = this.svcState.getSnapshot();
+    if (snapshot) {
+      if (snapshot.promptText) this.promptText = snapshot.promptText;
+      if (snapshot.form) this.form = { ...this.form, ...snapshot.form };
+      if (snapshot.scoresResponse) {
+        this.mapScores(snapshot.scoresResponse);
+        this.mapRecommendation(snapshot.scoresResponse);
+      }
+    }
+
+    // live updates (optional)
+    this.svcState.last$.subscribe((val) => {
+      if (!val) return;
+      // update UI when state changes elsewhere
+      if (val.promptText && val.promptText !== this.promptText)
+        this.promptText = val.promptText;
+    });
+  }
+
+  lastTraceId: string | null = null;
+
+  openTrace() {
+    if (!this.lastTraceId) {
+      alert('No trace available.');
+      return;
+    }
+
+    // open your trace UI page
+    window.open(`/trace/${this.lastTraceId}`, '_blank');
   }
 }

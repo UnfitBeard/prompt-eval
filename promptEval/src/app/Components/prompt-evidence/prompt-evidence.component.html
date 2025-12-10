@@ -1,0 +1,91 @@
+<div class="max-w-4xl mx-auto p-4">
+    <div *ngIf="(resp$ | async) as resp; else noResp">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h1 class="text-xl font-semibold">Prompt Evidence</h1>
+                <p class="text-sm text-gray-600">Saved at: {{ resp.timestamp || '—' }}</p>
+            </div>
+
+            <div class="flex gap-2">
+                <button class="px-3 py-1 border rounded" (click)="goBack()">Back</button>
+                <button class="px-3 py-1 border rounded" (click)="exportJson(resp)">Export JSON</button>
+                <button class="px-3 py-1 border rounded" (click)="copyJson(resp)">Copy JSON</button>
+            </div>
+        </div>
+
+        <!-- Prompt -->
+        <section class="mb-4 p-4 bg-white rounded shadow">
+            <h2 class="font-medium mb-2">Last evaluated prompt</h2>
+            <pre class="whitespace-pre-wrap break-words text-sm">{{ resp.promptText || '—' }}</pre>
+        </section>
+
+        <!-- Structured form (if present) -->
+        <section *ngIf="resp.form" class="mb-4 p-4 bg-white rounded shadow">
+            <h3 class="font-medium mb-2">Structured form</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                <div><strong>Domain:</strong> {{ resp.form.domain }}</div>
+                <div><strong>Subtype:</strong> {{ resp.form.subtype }}</div>
+                <div><strong>Title:</strong> {{ resp.form.title }}</div>
+                <div><strong>Audience:</strong> {{ resp.form.audience }}</div>
+                <div class="col-span-2"><strong>Key points:</strong> {{ resp.form.keyPoints }}</div>
+                <div class="col-span-2"><strong>Acceptance criteria:</strong>
+                    <pre class="whitespace-pre-wrap">{{ resp.form.acceptance }}</pre>
+                </div>
+                <div class="col-span-2"><strong>Constraints:</strong>
+                    <pre class="whitespace-pre-wrap">{{ resp.form.constraints }}</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Scores -->
+        <!-- Scores -->
+        <section *ngIf="resp.scoresResponse" class="mb-4 p-4 bg-white rounded shadow">
+            <h3 class="font-medium mb-2">Scorer output</h3>
+
+            <!-- wrapper ensures flex children can shrink -->
+            <div class="min-w-0">
+                <pre class="whitespace-pre-wrap break-words max-w-full overflow-x-auto text-sm">
+{{ resp.scoresResponse | json }}
+    </pre>
+            </div>
+        </section>
+
+
+        <!-- RAG / retrieved prompts -->
+        <section *ngIf="resp.retrieved?.length" class="mb-4 p-4 bg-white rounded shadow">
+            <h3 class="font-medium mb-2">Retrieved examples (RAG)</h3>
+            <div class="space-y-2">
+                <div *ngFor="let r of resp.retrieved; let i = index" class="p-2 border rounded">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="text-sm text-gray-700"><strong>{{i+1}}.</strong> {{ r.metadata?.prompt_preview
+                                || (r.content | slice:0:160) + '...' }}</div>
+                            <div class="text-xs text-gray-500 mt-1">
+                                source: {{ r.metadata?.source_url || r.metadata?.parent_row || 'unknown' }}
+                                <span *ngIf="r.metadata?.was_trimmed"> • trimmed</span>
+                                <span *ngIf="r.metadata?.is_code_like"> • code-like</span>
+                            </div>
+                        </div>
+                        <div class="ml-2 flex-shrink-0">
+                            <button class="px-2 py-1 text-xs border rounded" (click)="openFull(r.content)">View</button>
+                            <button class="px-2 py-1 text-xs border rounded ml-1"
+                                (click)="exportJson(r, 'rag-item-' + i + '.json')">Export</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LLM evaluation (structured JSON) -->
+        <section *ngIf="resp.llmEvaluation" class="mb-4 p-4 bg-white rounded shadow">
+            <h3 class="font-medium mb-2">LLM evaluation / recommendations</h3>
+            <pre class="text-sm max-w-full overflow-x-auto">{{ resp.llmEvaluation | json }}</pre>
+        </section>
+    </div>
+
+    <ng-template #noResp>
+        <div class="p-6 text-center text-gray-500">
+            No evaluation found. Return to the evaluation page and run a prompt first.
+        </div>
+    </ng-template>
+</div>

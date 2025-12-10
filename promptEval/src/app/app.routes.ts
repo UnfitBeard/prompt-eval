@@ -9,6 +9,10 @@ import { AdminProfileComponent } from './Components/admin-profile/admin-profile.
 import { RegistrationComponent } from './Components/registration/registration.component';
 import { LoginComponent } from './Components/login/login.component';
 import { authGuard } from './Guards/auth.guard';
+import { PromptEvidenceComponent } from './Components/prompt-evidence/prompt-evidence.component';
+import { IterationAnalysisComponent } from './Components/iteration-analysis/iteration-analysis.component';
+import { PromptEvalV2Component } from './Components/prompt-eval-v2/prompt-eval-v2.component';
+import { ChatbotComponent } from './Components/chatbot/chatbot.component';
 
 export const routes: Routes = [
   {
@@ -29,6 +33,26 @@ export const routes: Routes = [
   {
     path: 'prompt-evaluation',
     component: PromptEvaluationComponent,
+    data: { hideFooter: true },
+  },
+  {
+    path: 'prompt-eval-v2',
+    component: PromptEvalV2Component,
+    data: { hideFooter: true },
+  },
+  {
+    path: 'chat',
+    component: ChatbotComponent,
+    title: 'PromptPro Tutor',
+  },
+  {
+    path: 'trace/:id',
+    component: IterationAnalysisComponent,
+    data: { hideFooter: true },
+  },
+  {
+    path: 'prompt-evidence',
+    component: PromptEvidenceComponent,
     data: { hideFooter: true },
   },
   {

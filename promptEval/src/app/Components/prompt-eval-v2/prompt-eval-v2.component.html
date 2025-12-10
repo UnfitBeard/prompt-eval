@@ -1,0 +1,286 @@
+<!-- components/prompt-evaluator/prompt-evaluator.component.html -->
+<div class="prompt-evaluator-container">
+    <!-- Header -->
+    <div class="header">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">
+            <i class="fas fa-robot mr-2"></i>Prompt Evaluator Pro
+        </h1>
+        <p class="text-gray-600 mb-6">
+            Analyze and improve your AI prompts with automated scoring and suggestions
+        </p>
+    </div>
+
+    <!-- Error Alert -->
+    <div *ngIf="errorMessage" class="error-alert mb-6">
+        <div class="flex items-center">
+            <i class="fas fa-exclamation-triangle mr-3"></i>
+            <span>{{ errorMessage }}</span>
+        </div>
+        <button (click)="errorMessage = null" class="close-btn">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <!-- Main Form -->
+    <div class="evaluation-form-section mb-8">
+        <form [formGroup]="evaluationForm" (ngSubmit)="onSubmit()">
+            <div class="form-group">
+                <label for="prompt" class="form-label">
+                    <i class="fas fa-keyboard mr-2"></i>Enter Your Prompt
+                </label>
+                <textarea #promptInput id="prompt" formControlName="prompt" rows="6" class="prompt-textarea"
+                    placeholder="Enter your AI prompt here...&#10;Example: 'Create a Python function that validates email addresses with regex and unit tests'"
+                    [class.error]="evaluationForm.get('prompt')?.invalid && evaluationForm.get('prompt')?.touched"></textarea>
+
+                <div *ngIf="evaluationForm.get('prompt')?.invalid && evaluationForm.get('prompt')?.touched"
+                    class="error-messages">
+                    <small *ngIf="evaluationForm.get('prompt')?.errors?.['required']">
+                        Prompt is required
+                    </small>
+                    <small *ngIf="evaluationForm.get('prompt')?.errors?.['minlength']">
+                        Prompt must be at least 10 characters
+                    </small>
+                    <small *ngIf="evaluationForm.get('prompt')?.errors?.['maxlength']">
+                        Prompt cannot exceed 2000 characters
+                    </small>
+                </div>
+
+                <div class="character-counter">
+                    {{ evaluationForm.get('prompt')?.value?.length || 0 }} / 2000 characters
+                </div>
+            </div>
+
+            <!-- Advanced Options -->
+            <div class="advanced-options-toggle mb-4">
+                <button type="button" (click)="toggleAdvancedOptions()" class="toggle-btn">
+                    <i class="fas" [class.fa-chevron-down]="!showAdvancedOptions"
+                        [class.fa-chevron-up]="showAdvancedOptions"></i>
+                    Advanced Options
+                </button>
+            </div>
+
+            <div *ngIf="showAdvancedOptions" class="advanced-options grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="form-group">
+                    <label for="k" class="form-label">Similar Prompts (k)</label>
+                    <select id="k" formControlName="k" class="form-select">
+                        <option [value]="1">1 similar prompt</option>
+                        <option [value]="3">3 similar prompts</option>
+                        <option [value]="5">5 similar prompts</option>
+                        <option [value]="10">10 similar prompts</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" formControlName="improveIfLow" class="form-checkbox">
+                        <span>Auto-improve if score is low</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons flex flex-wrap gap-3">
+                <button type="submit" [disabled]="evaluationForm.invalid || isEvaluating" class="btn btn-primary">
+                    <i class="fas" [class.fa-spinner]="isEvaluating" [class.fa-spin]="isEvaluating"
+                        [class.fa-chart-line]="!isEvaluating"></i>
+                    {{ isEvaluating ? 'Evaluating...' : 'Evaluate Prompt' }}
+                </button>
+
+                <button type="button" (click)="clearAll()" class="btn btn-secondary">
+                    <i class="fas fa-eraser"></i> Clear
+                </button>
+
+                <button type="button" (click)="copyToClipboard(evaluationForm.get('prompt')?.value)"
+                    [disabled]="!evaluationForm.get('prompt')?.value" class="btn btn-outline">
+                    <i class="fas fa-copy"></i> Copy
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isEvaluating" class="loading-state mb-8">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h3 class="text-xl font-semibold text-gray-700 mb-2">Analyzing Your Prompt</h3>
+            <p class="text-gray-600">
+                Scoring dimensions, retrieving similar prompts, and generating suggestions...
+            </p>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div *ngIf="evaluationResult && !isEvaluating" id="results-section" class="results-section">
+        <!-- Score Summary -->
+        <div class="score-summary-card mb-8">
+            <div class="card-header">
+                <h2 class="text-2xl font-bold text-gray-800">
+                    <i class="fas fa-chart-bar mr-2"></i>Evaluation Results
+                </h2>
+                <div class="processing-time">
+                    <span class="time-badge">{{ formatTime(evaluationResult.processing_time_ms) }}</span>
+                </div>
+            </div>
+
+            <div class="overall-score-section">
+                <div class="overall-score">
+                    <div class="score-circle" [ngClass]="getScoreBadgeClass(evaluationResult.overall_score)">
+                        <span class="score-value">{{ evaluationResult.overall_score.toFixed(1) }}</span>
+                        <span class="score-label">Overall</span>
+                    </div>
+                    <div class="score-status">
+                        <h3 [ngClass]="getScoreColor(evaluationResult.overall_score)" class="text-xl font-bold mb-2">
+                            {{ evaluationResult.overall_score >= 6 ? 'Good Prompt!' : 'Needs Improvement' }}
+                        </h3>
+                        <p class="text-gray-600">
+                            {{ evaluationResult.needs_improvement ?
+                            'We found areas for improvement. See suggestions below.' :
+                            'Your prompt is well-structured. Consider the suggestions for further refinement.' }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Score Chart -->
+            <div class="score-chart-container mb-6">
+                <h3 class="text-lg font-semibold text-gray-700 mb-4">Score Breakdown</h3>
+                <div class="chart-wrapper">
+                    <canvas #scoreChart></canvas>
+                </div>
+            </div>
+
+            <!-- Detailed Scores -->
+            <div class="detailed-scores grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                <div *ngFor="let dimension of scoreBreakdown?.labels; let i = index" class="score-card">
+                    <div class="score-dimension">{{ dimension }}</div>
+                    <div class="score-value" [ngClass]="getScoreColor(scoreBreakdown.finalValues[i])">
+                        {{ scoreBreakdown.finalValues[i].toFixed(1) }}
+                    </div>
+                    <div class="score-diff">
+                        <small class="text-gray-500">
+                            Base: {{ scoreBreakdown.baseValues[i].toFixed(1) }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Suggestions -->
+        <div *ngIf="groupedSuggestions.length > 0" class="suggestions-card mb-8">
+            <div class="card-header">
+                <h3 class="text-xl font-bold text-gray-800">
+                    <i class="fas fa-lightbulb mr-2"></i>Improvement Suggestions
+                </h3>
+            </div>
+
+            <div class="suggestions-grid">
+                <div *ngFor="let group of groupedSuggestions" class="suggestion-group">
+                    <div class="group-header">
+                        <span class="dimension-name">{{ group.dimension }}</span>
+                        <span class="dimension-score" [ngClass]="getScoreColor(group.score)">
+                            {{ group.score.toFixed(1) }}/10
+                        </span>
+                    </div>
+                    <ul class="suggestion-list">
+                        <li *ngFor="let suggestion of group.suggestions" class="suggestion-item">
+                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                            {{ suggestion }}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Improved Version -->
+        <div *ngIf="evaluationResult.improved_version && evaluationResult.needs_improvement"
+            class="improved-version-card mb-8">
+            <div class="card-header">
+                <h3 class="text-xl font-bold text-gray-800">
+                    <i class="fas fa-magic mr-2"></i>Enhanced Version
+                </h3>
+                <button (click)="useImprovedVersion()" class="btn btn-sm btn-primary">
+                    <i class="fas fa-redo mr-1"></i> Use This Version
+                </button>
+            </div>
+
+            <div class="explanation mb-4 p-4 bg-blue-50 rounded-lg">
+                <h4 class="font-semibold text-blue-800 mb-2">What We Improved:</h4>
+                <p class="text-blue-700">{{ evaluationResult.improved_version.explanation }}</p>
+            </div>
+
+            <div class="improved-prompt">
+                <div class="prompt-header">
+                    <span class="text-gray-600 text-sm">Enhanced Prompt:</span>
+                    <button (click)="copyToClipboard(evaluationResult.improved_version!.content)" class="copy-btn">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                </div>
+                <div class="prompt-content">
+                    {{ evaluationResult.improved_version.content }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Similar Prompts -->
+        <div *ngIf="evaluationResult && evaluationResult.similar_prompts && evaluationResult.similar_prompts.length > 0"
+            class="similar-prompts-card">
+            <div class="card-header">
+                <h3 class="text-xl font-bold text-gray-800">
+                    <i class="fas fa-search mr-2"></i>Similar High-Quality Prompts
+                </h3>
+                <span class="text-gray-500 text-sm">
+                    {{ evaluationResult.similar_prompts.length }} found
+                </span>
+            </div>
+
+            <div class="similar-prompts-list">
+                <div *ngFor="let similar of evaluationResult.similar_prompts; let i = index"
+                    class="similar-prompt-item">
+                    <div class="similar-prompt-header">
+                        <span class="similar-index">#{{ i + 1 }}</span>
+                        <span *ngIf="similar.similarity" class="similarity-badge">
+                            {{ (similar.similarity * 100).toFixed(0) }}% match
+                        </span>
+                    </div>
+
+                    <div class="similar-prompt-content">
+                        {{ similar.content }}
+                    </div>
+
+                    <div *ngIf="similar.metadata.source_url" class="similar-prompt-meta">
+                        <a [href]="similar.metadata.source_url" target="_blank" class="source-link">
+                            <i class="fas fa-external-link-alt mr-1"></i>
+                            {{ similar.metadata.page_title || 'View Source' }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Debug Info -->
+    <div *ngIf="evaluationResult" class="debug-info mt-8 pt-8 border-t border-gray-200">
+        <details>
+            <summary class="cursor-pointer text-gray-500 hover:text-gray-700">
+                <i class="fas fa-bug mr-2"></i>Debug Information
+            </summary>
+            <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="font-semibold text-gray-700 mb-2">Trace ID</h4>
+                        <code class="text-sm bg-gray-100 p-2 rounded block">{{ evaluationResult.trace_id }}</code>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-700 mb-2">Raw Response</h4>
+                        <button (click)="copyToClipboard(evaluationResult)" class="btn btn-xs btn-outline mb-2">
+                            Copy JSON
+                        </button>
+                        <pre class="text-xs bg-gray-100 p-2 rounded max-h-40 overflow-auto">
+{{ evaluationResult | json }}
+            </pre>
+                    </div>
+                </div>
+            </div>
+        </details>
+    </div>
+</div>

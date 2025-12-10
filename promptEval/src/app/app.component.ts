@@ -24,9 +24,11 @@ export class AppComponent {
   navigationItems: NavItem[] = [
     { label: 'Dashboard', href: '/dashboard' },
     // { label: 'Landing page', href: '/landing-page' },
-    { label: 'PromptEvaluation', href: '/prompt-evaluation' },
+    // { label: 'PromptEvaluation', href: '/prompt-evaluation' },
+    { label: 'Prompt Evaluation', href: '/prompt-eval-v2' },
+    { label: 'PromptEvidence', href: '/prompt-evidence' },
     { label: 'Templates', href: '/user-templates' },
-    { label: 'Settings', href: '/settings' },
+    { label: 'Chat', href: '/chat' },
   ];
 
   showNavbar = signal(true);

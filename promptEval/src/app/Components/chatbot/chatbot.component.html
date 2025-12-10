@@ -1,0 +1,210 @@
+<!-- components/chatbot/chatbot.component.html -->
+<div class="chatbot-container">
+    <!-- Sidebar -->
+    <div *ngIf="showSidebar" class="chat-sidebar">
+        <div class="sidebar-header">
+            <h3>PromptPro Tutor</h3>
+            <button (click)="toggleSidebar()" class="close-sidebar">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- New Chat Button -->
+        <div class="sidebar-section">
+            <button (click)="createNewChat()" class="btn-new-chat">
+                <i class="fas fa-plus"></i> New Chat
+            </button>
+        </div>
+
+        <!-- Conversations List -->
+        <div class="sidebar-section">
+            <h4>Recent Chats</h4>
+            <div class="conversations-list">
+                <div *ngFor="let conv of conversations" [class.active]="activeConversation?.id === conv.id"
+                    (click)="selectConversation(conv)" class="conversation-item">
+                    <div class="conversation-preview">
+                        <i class="fas fa-comment"></i>
+                        <span class="conversation-title">{{ getConversationSummary(conv) }}</span>
+                    </div>
+                    <div class="conversation-meta">
+                        <span class="conversation-time">
+                            {{ formatTime(conv.updated_at) }}
+                        </span>
+                        <button (click)="deleteConversation(conv, $event)" class="btn-delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div *ngIf="conversations.length === 0" class="empty-conversations">
+                    <i class="fas fa-comments"></i>
+                    <p>No conversations yet</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Knowledge Base Info -->
+        <div class="sidebar-section knowledge-base-info">
+            <h4>Knowledge Base</h4>
+            <div *ngIf="isKnowledgeBaseReady()" class="kb-status ready">
+                <i class="fas fa-check-circle"></i>
+                <span>Ready ({{ knowledgeBaseStats?.document_count || 0 }} docs)</span>
+            </div>
+            <div *ngIf="!isKnowledgeBaseReady()" class="kb-status loading">
+                <i class="fas fa-sync fa-spin"></i>
+                <span>Loading...</span>
+            </div>
+
+            <button (click)="refreshKnowledgeBase()" class="btn-refresh-kb">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Chat Area -->
+    <div class="chat-main" [class.sidebar-hidden]="!showSidebar">
+        <!-- Chat Header -->
+        <div class="chat-header">
+            <button (click)="toggleSidebar()" class="toggle-sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <div class="header-info">
+                <h2>Prompt Engineering Tutor</h2>
+                <p class="subtitle">Ask me anything about prompt engineering</p>
+            </div>
+
+            <div class="header-actions">
+                <button (click)="createNewChat()" class="btn-header">
+                    <i class="fas fa-plus"></i> New
+                </button>
+
+                <div *ngIf="currentSources.length > 0" class="sources-indicator">
+                    <button (click)="toggleSources()" class="btn-sources">
+                        <i class="fas fa-book"></i>
+                        <span class="count">{{ currentSources.length }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sources Panel -->
+        <div *ngIf="showSources && currentSources.length > 0" class="sources-panel">
+            <div class="sources-header">
+                <h4>Sources Used</h4>
+                <button (click)="toggleSources()" class="close-sources">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="sources-list">
+                <div *ngFor="let source of currentSources" class="source-item">
+                    <a [href]="source.source" target="_blank" class="source-link">
+                        <i class="fas fa-external-link-alt"></i>
+                        {{ source.title || source.source }}
+                    </a>
+                    <span class="source-relevance">Relevance: {{ source.relevance * 100 | number:'1.0-0' }}%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages Container -->
+        <div #messageContainer class="messages-container">
+            <!-- Welcome Message -->
+            <div *ngIf="activeConversation?.messages!.length === 0" class="welcome-message">
+                <div class="welcome-content">
+                    <div class="avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3>Hello! I'm PromptPro 👋</h3>
+                    <p>I'm your expert Prompt Engineering tutor. I can help you with:</p>
+                    <ul class="capabilities-list">
+                        <li><i class="fas fa-check"></i> Prompt design & optimization</li>
+                        <li><i class="fas fa-check"></i> Best practices & techniques</li>
+                        <li><i class="fas fa-check"></i> Code examples & templates</li>
+                        <li><i class="fas fa-check"></i> Model-specific guidance</li>
+                        <li><i class="fas fa-check"></i> Troubleshooting & debugging</li>
+                    </ul>
+                    <p class="start-hint">Type your question below to get started!</p>
+                </div>
+            </div>
+
+            <!-- Messages -->
+            <div *ngFor="let msg of activeConversation?.messages" [class.user-message]="isUserMessage(msg)"
+                [class.assistant-message]="!isUserMessage(msg)" class="message">
+
+                <div class="message-avatar">
+                    <i *ngIf="isUserMessage(msg)" class="fas fa-user"></i>
+                    <i *ngIf="!isUserMessage(msg)" class="fas fa-robot"></i>
+                </div>
+
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="message-sender">
+                            {{ isUserMessage(msg) ? 'You' : 'PromptPro' }}
+                        </span>
+                        <span class="message-time">{{ formatTime(msg.timestamp) }}</span>
+                    </div>
+
+                    <div class="message-text" [innerHTML]="msg.content"></div>
+
+                    <div *ngIf="!isUserMessage(msg)" class="message-actions">
+                        <button (click)="copyToClipboard(msg.content)" class="btn-message-action">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Typing Indicator -->
+            <div *ngIf="isProcessing" class="typing-indicator">
+                <div class="typing-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="typing-content">
+                    <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Suggestions -->
+        <div *ngIf="currentSuggestions.length > 0" class="suggestions-container">
+            <div class="suggestions-header">
+                <span>Try asking:</span>
+            </div>
+            <div class="suggestions-list">
+                <button *ngFor="let suggestion of currentSuggestions" (click)="useSuggestion(suggestion)"
+                    class="suggestion-chip">
+                    {{ suggestion }}
+                </button>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-container">
+            <form [formGroup]="messageForm" (ngSubmit)="onSubmit()">
+                <div class="input-wrapper">
+                    <textarea #messageInput formControlName="message"
+                        placeholder="Ask me anything about prompt engineering..." (keydown.enter)="onKeyPress($event)"
+                        rows="1" class="message-input" [disabled]="isProcessing"></textarea>
+
+                    <button type="submit" [disabled]="messageForm.invalid || isProcessing" class="send-button">
+                        <i *ngIf="!isProcessing" class="fas fa-paper-plane"></i>
+                        <i *ngIf="isProcessing" class="fas fa-spinner fa-spin"></i>
+                    </button>
+                </div>
+
+                <div class="input-hints">
+                    <span class="hint">Press Enter to send • Shift+Enter for new line</span>
+                    <span *ngIf="knowledgeBaseStats" class="kb-hint">
+                        <i class="fas fa-database"></i>
+                        {{ knowledgeBaseStats.document_count || 0 }} sources available
+                    </span>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

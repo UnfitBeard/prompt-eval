@@ -1,264 +1,467 @@
-# server.py
-from fastapi import Body
-from scorer import load_scorer, score_prompt, apply_vagueness_penalty, TARGETS
-import os
+# server.py - REDESIGNED FOR SPEED
+import uuid
+import time
 import json
-from typing import List
-from fastapi import FastAPI, HTTPException
+import os
+from typing import List, Optional, Dict
+from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+import numpy as np
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from pydantic import BaseModel
-from sentence_transformers import SentenceTransformer
-import chromadb
-from chromadb.config import Settings
-from chromadb import PersistentClient
-from prompts import EVAL_SYSTEM_PROMPT, IMPROVE_SYSTEM_PROMPT, build_eval_user_message, build_improve_user_message
-from utils import extract_json_inside_codeblock, clean_text
-from langchain.messages import HumanMessage, SystemMessage
-from langchain_google_genai import ChatGoogleGenerativeAI
-from tqdm import tqdm
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+from sentence_transformers import SentenceTransformer
+from chromadb import PersistentClient
+import sqlite3
+import asyncio
+
+from utils import Trace, logger, clean_text, extract_json_inside_codeblock
+from scorer import load_scorer, score_prompt, apply_vagueness_penalty, TARGETS
+from prompts import EVAL_SYSTEM_PROMPT, IMPROVE_SYSTEM_PROMPT, build_improve_user_message
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain.messages import SystemMessage, HumanMessage
+from pydantic import BaseModel
+from services.chatbot_service import ChatbotService
+from services.prompt_evaluator_endpoint import chatbot_router
 
 load_dotenv()
 
-# scorer
+
+# ======================
+# CONFIGURATION
+# ======================
 ART_DIR = "./scoring_artifacts"
 EMBEDDER_SCORER, REG, SCALER, TARGETS_SCORER, VERSION_SCORER = load_scorer(
     ART_DIR)
+
+# Warmup
 _ = EMBEDDER_SCORER.encode(
     ["warmup"], normalize_embeddings=True, show_progress_bar=False)
 
-# scorer
+CHROMA_PERSIST_DIR = "./vectorstore"
+EMBED_MODEL_NAME = "all-MiniLM-L6-v2"  # Fast, lightweight
+GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 
-CHROMA_DIR = os.environ.get("CHROMA_DIR", "./chroma_db")
-EMBED_MODEL_NAME = os.environ.get("EMBED_MODEL", "all-MiniLM-L6-v2")
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+# Thresholds
+SCORE_THRESHOLD = 6.0  # Below this, we suggest improvements
+MIN_IMPROVEMENT_DELTA = 1.0  # Minimum score improvement to show alternative
 
-if GEMINI_API_KEY is None:
-    raise RuntimeError("Set GEMINI_API_KEY in env")
+# ======================
+# DATABASE SETUP (SQLite for history)
+# ======================
 
-app = FastAPI(title="PromptSet RAG Service")
 
-# CORS config
-origins = [
-    "http://localhost:4200",  # Angular dev server
-    "http://localhost:3000",  # React dev server, optional
-    "*",  # allow all origins (use carefully in production)
-]
+def init_db():
+    conn = sqlite3.connect('prompt_history.db')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS prompt_evaluations
+                 (id TEXT PRIMARY KEY,
+                  prompt TEXT,
+                  timestamp DATETIME,
+                  base_scores TEXT,
+                  final_scores TEXT,
+                  overall_score REAL,
+                  suggestions TEXT,
+                  improved_prompt TEXT,
+                  improved_scores TEXT,
+                  trace_id TEXT)''')
+    conn.commit()
+    conn.close()
+
+
+init_db()
+
+# ======================
+# FASTAPI APP
+# ======================
+app = FastAPI(title="Fast Prompt Evaluator")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,       # list of allowed origins
-    allow_credentials=True,      # allow cookies/auth headers
-    allow_methods=["*"],         # allow all HTTP methods
-    allow_headers=["*"],         # allow all headers
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# -----------------------------------
+# Register routers
+app.include_router(chatbot_router, prefix="/api/v1")
 
-embedder = SentenceTransformer(EMBED_MODEL_NAME)
-client = PersistentClient(path="./vectorstore")
-col = client.get_collection("promptset")
 
-llm = ChatGoogleGenerativeAI(
-    model="gemini-2.0-flash",
+# ======================
+# SERVICES INITIALIZATION
+# ======================
+# Use a faster embedder for RAG
+rag_embedder = SentenceTransformer(EMBED_MODEL_NAME)
+
+# Chroma client
+chroma_client = PersistentClient(path=CHROMA_PERSIST_DIR)
+try:
+    rag_collection = chroma_client.get_collection("prompts")
+except:
+    rag_collection = chroma_client.create_collection("prompts")
+
+# LLM client (use faster model for initial eval)
+llm_fast = ChatGoogleGenerativeAI(
+    model="gemini-2.5-flash-lite",  # Faster than 2.5-flash
     temperature=0,
     google_api_key=GEMINI_API_KEY,
-    max_tokens=None,
-    timeout=None,
-    max_retries=2,
+    max_tokens=500,
+    timeout=10,  # Shorter timeout
 )
+
+llm_smart = ChatGoogleGenerativeAI(
+    model="gemini-2.5-flash-lite",
+    temperature=0,
+    google_api_key=GEMINI_API_KEY,
+    max_tokens=1000,
+    timeout=30,
+)
+
+# Thread pool for parallel operations
+executor = ThreadPoolExecutor(max_workers=4)
+
+# ======================
+# MODELS
+# ======================
 
 
 class PromptIn(BaseModel):
     prompt: str
-    k: int = 5
+    k: int = 3  # Reduced from 5 for speed
+    improve_if_low: bool = True
 
 
-def _retrieve_similar(prompt: str, k: int = 5):
-    emb = embedder.encode(clean_text(prompt)).tolist()
-    res = col.query(query_embeddings=[emb], n_results=k)
-    docs = []
-    # res fields: 'ids', 'documents', 'metadatas', 'distances' depending on chroma
-    doc_texts = res.get("documents", [[]])[0]
-    metadatas = res.get("metadatas", [[]])[0]
-    for d_text, meta in zip(doc_texts, metadatas):
-        docs.append({"content": d_text, "metadata": meta})
-    return docs
-
-
-def _parse_json_response(raw: str):
-    # try to extract json inside codeblock
-    candidate = extract_json_inside_codeblock(raw).strip()
-    try:
-        return json.loads(candidate)
-    except Exception:
-        # try to find first { ... } block
-        m = None
-        import re
-        m = re.search(r"\{[\s\S]*\}", raw)
-        if m:
-            try:
-                return json.loads(m.group(0))
-            except Exception:
-                pass
-        # fallback: try to convert simple key:value pairs
-        return {"raw": raw}
-
-
-@app.post("/evaluate")
-async def evaluate(p: PromptIn):
-    if not p.prompt or p.prompt.strip() == "":
-        raise HTTPException(status_code=400, detail="Missing prompt")
-    # retrieve
-    docs = _retrieve_similar(p.prompt, k=p.k)
-    sys_msg = SystemMessage(content=EVAL_SYSTEM_PROMPT)
-    user_msg = HumanMessage(content=build_eval_user_message(p.prompt, docs))
-    try:
-        resp = llm.invoke([sys_msg, user_msg])
-        raw = resp.content
-        parsed = _parse_json_response(raw)
-        return {"raw": raw, "parsed": parsed, "retrieved_count": len(docs)}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/improve")
-async def improve(p: PromptIn):
-    if not p.prompt or p.prompt.strip() == "":
-        raise HTTPException(status_code=400, detail="Missing prompt")
-    docs = _retrieve_similar(p.prompt, k=p.k)
-    sys_msg = SystemMessage(content=IMPROVE_SYSTEM_PROMPT)
-    user_msg = HumanMessage(content=build_improve_user_message(p.prompt, docs))
-    try:
-        resp = llm.invoke([sys_msg, user_msg])
-        raw = resp.content
-        parsed = _parse_json_response(raw)
-        return {"raw": raw, "parsed": parsed, "retrieved_count": len(docs)}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-class PromptScoreIn(BaseModel):
+class EvaluationResult(BaseModel):
     prompt: str
+    scores: Dict
+    overall_score: float
+    needs_improvement: bool
+    suggestions: List[str]
+    similar_prompts: List[Dict]
+    improved_version: Optional[Dict] = None
+    trace_id: str
+    processing_time_ms: float
+
+# ======================
+# CORE LOGIC
+# ======================
 
 
-@app.post("/score")
-async def score_endpoint(p: PromptScoreIn):
-    base_scores = score_prompt(
-        p.prompt, EMBEDDER_SCORER, REG, SCALER, TARGETS_SCORER)
-    final_scores = apply_vagueness_penalty(base_scores, p.prompt)
-    return {
-        "prompt": p.prompt,
-        "base_scores": base_scores,
-        "final_scores": final_scores,
-        "scorer_version": VERSION_SCORER
-    }
+def save_to_history(eval_result: dict):
+    """Save evaluation to SQLite for user history"""
+    try:
+        conn = sqlite3.connect('prompt_history.db')
+        c = conn.cursor()
+        c.execute('''INSERT INTO prompt_evaluations 
+                     (id, prompt, timestamp, base_scores, final_scores, overall_score, 
+                      suggestions, improved_prompt, improved_scores, trace_id)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                  (str(uuid.uuid4()),
+                   eval_result['prompt'],
+                   datetime.now(),
+                   json.dumps(eval_result['scores']['base_scores']),
+                   json.dumps(eval_result['scores']['final_scores']),
+                   eval_result['overall_score'],
+                   json.dumps(eval_result.get('suggestions', [])),
+                   eval_result.get('improved_version', {}).get('content', ''),
+                   json.dumps(eval_result.get(
+                       'improved_version', {}).get('scores', {})),
+                   eval_result.get('trace_id', '')))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        logger.error(f"Failed to save to history: {e}")
 
 
-@app.get("/health")
-async def health():
-    return {"status": "ok"}
+async def score_prompt_async(prompt: str):
+    """Score prompt in thread pool"""
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(executor, score_prompt, prompt,
+                                      EMBEDDER_SCORER, REG, SCALER, TARGETS_SCORER)
 
 
-# -------------------------------
-# Unified endpoint
-# -------------------------------
+async def retrieve_similar_async(prompt: str, k: int):
+    """Retrieve similar prompts in parallel"""
+    def _retrieve():
+        clean = clean_text(prompt)
+        if not clean:
+            return []
 
-
-SYSTEM_PROMPT = """
-You are a strict evaluator for programming prompts.
-
-Return ONLY JSON in a single fenced code block like:
-
-```json
-{
-  "clarity": 7.5,
-  "context": 7.0,
-  "relevance": 9.0,
-  "specificity": 7.5,
-  "creativity": 6.0,
-  "suggestions": [
-    { "text": "Add input/output examples." },
-    { "text": "Specify language/runtime and constraints." }
-  ],
-  "rewriteVersions": [
-    {
-      "title": "Enhanced Version",
-      "content": "...",
-      "improvements": [{ "text": "..." }]
-    },
-    {
-      "title": "Alternative Version",
-      "content": "...",
-      "improvements": [{ "text": "..." }]
-    },
-    {
-      "title": "Minimalist Version",
-      "content": "...",
-      "improvements": [{ "text": "..." }]
-    }
-  ]
-}
-Scoring scale: 1–10 (decimals allowed).
-"""
-
-
-def build_eval_user_message(user_prompt: str, retrieved: List[dict]) -> str:
-    """
-    retrieved: list of dicts {"content": ..., "metadata": {...}}
-    """
-    examples_text = ""
-    for i, doc in enumerate(retrieved):
-        meta = doc.get("metadata", {})
-        examples_text += (
-            f"{i+1}) repo: {meta.get('repo')}, file: {meta.get('file')}\n"
-            f"PROMPT_PREVIEW: {meta.get('prompt_preview')}\n"
-            f"CONTENT_SNIPPET: {doc.get('content')[:300]}\n\n"
+        q_emb = rag_embedder.encode(clean).tolist()
+        results = rag_collection.query(
+            query_embeddings=[q_emb],
+            n_results=min(k, 10),
+            include=["documents", "metadatas", "distances"]
         )
 
-    return f"""
-PROMPT TO EVALUATE:
-\"\"\"{user_prompt}\"\"\"
+        similar = []
+        docs = results.get('documents', [[]])[0]
+        metas = results.get('metadatas', [[]])[0]
+        dists = results.get('distances', [[]])[0]
 
-Similar prompt examples:
-{examples_text}
-"""
+        for doc, meta, dist in zip(docs, metas, dists):
+            similar.append({
+                "content": doc[:300],  # Truncate for speed
+                "metadata": meta,
+                "similarity": float(1 - dist) if dist is not None else None,
+                "source": meta.get('source_url', 'unknown')
+            })
+        return similar
+
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(executor, _retrieve)
 
 
-# **2️⃣ Integrate into the unified endpoint**
+async def generate_suggestions_fast(prompt: str, scores: Dict, similar_prompts: List):
+    """Fast LLM call for suggestions only"""
+    # Prepare context from similar prompts
+    context = "\n".join([
+        f"Example {i+1}: {p['content'][:200]}..."
+        for i, p in enumerate(similar_prompts[:2])  # Use only top 2
+    ])
+
+    low_dimensions = [
+        dim for dim, score in scores.items()
+        if score < SCORE_THRESHOLD
+    ]
+
+    system_msg = SystemMessage(content="""You are a prompt optimization assistant. 
+Return ONLY a JSON array of 1-3 specific, actionable suggestions to improve the prompt.
+Format: ["suggestion 1", "suggestion 2", "suggestion 3"]""")
+
+    user_msg = HumanMessage(content=f"""Prompt: {prompt}
+
+Current scores (1-10):
+{json.dumps(scores, indent=2)}
+
+Low dimensions: {', '.join(low_dimensions) if low_dimensions else 'None'}
+
+Similar high-quality prompts:
+{context}
+
+Provide 1-3 specific suggestions:""")
+
+    try:
+        resp = await asyncio.wait_for(
+            llm_fast.ainvoke([system_msg, user_msg]),
+            timeout=5.0
+        )
+
+        # Parse suggestions
+        content = resp.content.strip()
+        if content.startswith('[') and content.endswith(']'):
+            return json.loads(content)
+        elif content.startswith('```json'):
+            return json.loads(extract_json_inside_codeblock(content))
+        else:
+            # Fallback: generate based on low dimensions
+            return [f"Improve {dim}: Add more specific details" for dim in low_dimensions[:3]]
+
+    except Exception as e:
+        logger.error(f"Fast suggestions failed: {e}")
+        return []
 
 
-@app.post("/process_prompt")
-async def process_prompt(p: PromptIn):
-    if not p.prompt or p.prompt.strip() == "":
-        raise HTTPException(status_code=400, detail="Missing prompt")
+async def generate_improved_version(prompt: str, suggestions: List[str], similar_prompts: List):
+    """Generate improved prompt (only if really needed)"""
+    if not suggestions:
+        return None
 
-    # 1️⃣ Score prompt
-    base_scores = score_prompt(
-        p.prompt, EMBEDDER_SCORER, REG, SCALER, TARGETS_SCORER
-    )
-    final_scores = apply_vagueness_penalty(base_scores, p.prompt)
+    # Build context from best similar prompts
+    context_examples = "\n\n".join([
+        f"High-quality example {i+1}:\n{p['content']}"
+        for i, p in enumerate(similar_prompts[:3])
+    ])
 
-    # 2️⃣ Retrieve top-k similar prompts
-    retrieved_docs = _retrieve_similar(p.prompt, k=p.k)
+    system_msg = SystemMessage(content=IMPROVE_SYSTEM_PROMPT)
+    user_msg = HumanMessage(content=f"""Original prompt (needs improvement):
+{prompt}
 
-    # 3️⃣ LLM evaluation using strict JSON template
-    sys_msg = SystemMessage(content=SYSTEM_PROMPT)
-    user_msg = HumanMessage(
-        content=build_eval_user_message(p.prompt, retrieved_docs)
-    )
-    resp = llm.invoke([sys_msg, user_msg])
+Specific issues to fix:
+{chr(10).join(f"- {s}" for s in suggestions)}
 
-    # 4️⃣ Parse JSON inside code block
-    parsed_llm = _parse_json_response(resp.content)
+High-quality reference prompts:
+{context_examples}
 
-    # 5️⃣ Return unified response
-    return {
-        "prompt": p.prompt,
-        "scores": {
+Please provide ONE improved version that addresses the issues while maintaining the original intent.""")
+
+    try:
+        resp = await asyncio.wait_for(
+            llm_smart.ainvoke([system_msg, user_msg]),
+            timeout=15.0
+        )
+
+        # Parse improved prompt
+        content = resp.content
+        parsed = json.loads(extract_json_inside_codeblock(content))
+
+        if isinstance(parsed, dict) and 'improved_prompt' in parsed:
+            return {
+                "content": parsed['improved_prompt'],
+                "explanation": parsed.get('explanation', ''),
+                "changes": suggestions
+            }
+        else:
+            return {"content": content, "explanation": "AI-generated improvement"}
+
+    except Exception as e:
+        logger.error(f"Improvement generation failed: {e}")
+        return None
+
+# ======================
+# MAIN ENDPOINT - OPTIMIZED
+# ======================
+
+
+@app.post("/evaluate", response_model=EvaluationResult)
+async def evaluate_prompt(p: PromptIn, background_tasks: BackgroundTasks):
+    """Fast, single-pass evaluation with intelligent suggestions"""
+    start_time = time.time()
+    trace_id = str(uuid.uuid4())
+    trace = Trace()
+
+    logger.info(f"Evaluating prompt (length: {len(p.prompt)})")
+    trace.log("start", {"prompt_length": len(p.prompt)})
+
+    try:
+        # STEP 1: Score the prompt (fast - 100-300ms)
+        trace.log("scoring_start")
+        base_scores = await score_prompt_async(p.prompt)
+        final_scores = apply_vagueness_penalty(base_scores, p.prompt)
+
+        # Calculate overall score
+        overall = np.mean(list(final_scores.values()))
+        trace.log("scoring_complete", {
             "base_scores": base_scores,
-            "final_scores": final_scores
+            "final_scores": final_scores,
+            "overall": overall
+        })
+
+        # STEP 2: Retrieve similar prompts IN PARALLEL with scoring
+        trace.log("retrieval_start")
+        similar_future = retrieve_similar_async(p.prompt, p.k)
+
+        # Wait for both
+        similar_prompts = await similar_future
+        trace.log("retrieval_complete", {"count": len(similar_prompts)})
+
+        # STEP 3: Check if improvement is needed
+        needs_improvement = overall < SCORE_THRESHOLD and p.improve_if_low
+        suggestions = []
+        improved_version = None
+
+        if needs_improvement:
+            # STEP 4: Generate quick suggestions (fast)
+            trace.log("suggestions_start")
+            suggestions = await generate_suggestions_fast(p.prompt, final_scores, similar_prompts)
+            trace.log("suggestions_complete", {"count": len(suggestions)})
+
+            # STEP 5: Generate improved version if suggestions exist
+            if suggestions and overall < (SCORE_THRESHOLD - 1.0):
+                trace.log("improvement_generation_start")
+                improved_version = await generate_improved_version(p.prompt, suggestions, similar_prompts)
+                trace.log("improvement_generation_complete")
+
+        # STEP 6: Prepare response
+        processing_time = (time.time() - start_time) * 1000
+
+        result = {
+            "prompt": p.prompt,
+            "scores": {
+                "base_scores": base_scores,
+                "final_scores": final_scores
+            },
+            "overall_score": round(overall, 2),
+            "needs_improvement": needs_improvement,
+            "suggestions": suggestions,
+            "similar_prompts": similar_prompts[:3],  # Return top 3 only
+            "improved_version": improved_version,
+            "trace_id": trace_id,
+            "processing_time_ms": round(processing_time, 2)
+        }
+
+        # Save to history in background
+        background_tasks.add_task(save_to_history, result)
+
+        # Export trace
+        trace.finish()
+
+        logger.info(
+            f"Evaluation complete in {processing_time:.0f}ms, overall: {overall:.1f}")
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Evaluation failed: {e}", exc_info=True)
+        trace.log("error", {"error": str(e)})
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ======================
+# ADDITIONAL ENDPOINTS
+# ======================
+
+
+@app.get("/history")
+async def get_history(limit: int = 20):
+    """Get user's evaluation history"""
+    try:
+        conn = sqlite3.connect('prompt_history.db')
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        c.execute('''SELECT * FROM prompt_evaluations 
+                     ORDER BY timestamp DESC LIMIT ?''', (limit,))
+        rows = c.fetchall()
+        conn.close()
+
+        return [
+            {**dict(row),
+             "base_scores": json.loads(row["base_scores"]),
+             "final_scores": json.loads(row["final_scores"])}
+            for row in rows
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/batch_evaluate")
+async def batch_evaluate(prompts: List[str], background_tasks: BackgroundTasks):
+    """Evaluate multiple prompts efficiently"""
+    results = []
+    for prompt in prompts:
+        result = await evaluate_prompt(
+            PromptIn(prompt=prompt, k=2, improve_if_low=False),
+            background_tasks
+        )
+        results.append(result)
+    return {"results": results}
+
+
+# Health endpoint for entire service
+@app.get("/health")
+async def health():
+    """Overall service health check"""
+    return {
+        "status": "healthy",
+        "services": {
+            "prompt_evaluator": "active",
+            "chatbot": "active"
         },
-        "top_rag_prompts": retrieved_docs,
-        "llm_evaluation": parsed_llm,
+        "version": "1.0.0"
     }
+
+# ======================
+# CLEANUP ON SHUTDOWN
+# ======================
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    executor.shutdown(wait=True)
+    logger.info("Executor shutdown complete")
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

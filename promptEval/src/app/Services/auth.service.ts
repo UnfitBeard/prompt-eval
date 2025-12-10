@@ -63,7 +63,7 @@ export class AuthService {
   }
 
   logout() {
-    this.clearToken;
+    this.clearToken();
     this._loggedIn.set(false);
   }
 
@@ -75,6 +75,6 @@ export class AuthService {
     localStorage.removeItem('access_token');
   }
 
-  private _loggedIn = signal<boolean>(!!localStorage.getItem('accessToken'));
+  private _loggedIn = signal<boolean>(!!localStorage.getItem('access_token'));
   loggedIn = computed(() => this._loggedIn());
 }

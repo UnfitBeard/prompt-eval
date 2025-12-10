@@ -16,6 +16,7 @@ export interface RewriteVersion {
 
 /** Response shape from your /api/evaluate endpoint */
 export interface EvaluateResponse {
+  attempt: [];
   clarity: number | null;
   context: number | null;
   relevance: number | null;
@@ -36,11 +37,25 @@ export interface ScoresResponse {
       relevance: number | null;
       specificity: number | null;
     };
+    base_scores: {
+      clarity: number | null;
+      context: number | null;
+      creativity: number | null;
+      relevance: number | null;
+      specificity: number | null;
+    };
   };
+  top_rag_prompts: any;
   llm_evaluation: {
+    clarity: number | null;
+    context: number | null;
+    creativity: number | null;
+    relevance: number | null;
+    specificity: number | null;
     suggestions: Suggestion[];
     rewriteVersions: RewriteVersion[];
   };
+  trace_id: any;
 }
 
 /** Response shape from /api/recommendations */
