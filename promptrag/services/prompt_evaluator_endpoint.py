@@ -1,4 +1,6 @@
 # server.py - Chatbot endpoints only
+import asyncio
+import threading
 from fastapi import APIRouter
 import os
 import uuid
@@ -9,7 +11,6 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
-from services.chatbot_service import ChatbotService
 from utils import logger
 
 load_dotenv()
@@ -19,33 +20,51 @@ chatbot_service = None
 
 
 def init_chatbot_service():
-    """Initialize the chatbot service"""
+    """Initialize chatbot service in a separate thread with event loop"""
     global chatbot_service
-    try:
-        gemini_api_key = os.environ.get("GEMINI_API_KEY")
-        if not gemini_api_key:
-            raise RuntimeError(
-                "GEMINI_API_KEY environment variable is required")
 
-        chatbot_service = ChatbotService(gemini_api_key)
+    def run_async_init():
+        # IMPORTANT: this nested function must declare `global chatbot_service`.
+        # Without it, assignments below create a *local* variable and the module-level
+        # `chatbot_service` remains None, causing all endpoints to return 503.
+        global chatbot_service
 
-        # Ensure knowledge base has content
-        async def initialize_knowledge_base():
-            await chatbot_service.ensure_knowledge_base()
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
 
-        # Run initialization in background
-        import asyncio
-        asyncio.create_task(initialize_knowledge_base())
+        try:
+            from services.chatbot_service import ChatbotService
 
-        logger.info("Chatbot service initialized successfully")
+            gemini_api_key = os.environ.get("GEMINI_API_KEY")
+            if not gemini_api_key:
+                print("⚠️ GEMINI_API_KEY not found, chatbot will be unavailable")
+                chatbot_service = None
+                return
 
-    except Exception as e:
-        logger.error(f"Failed to initialize chatbot service: {e}")
-        chatbot_service = None
+            chatbot_service = ChatbotService(gemini_api_key)
+
+            # Initialize knowledge base in the background
+           # Ensure knowledge base has content
+            async def initialize_knowledge_base():
+                await chatbot_service.ensure_knowledge_base()
+
+            loop.run_until_complete(initialize_knowledge_base())
+            print("✅ Chatbot service initialized successfully")
+
+        except Exception as e:
+            print(f"❌ Failed to initialize chatbot service: {e}")
+            chatbot_service = None
+        finally:
+            loop.close()
+
+    # Run in a separate thread to not block main thread
+    thread = threading.Thread(target=run_async_init)
+    thread.daemon = True
+    thread.start()
 
 
-# Initialize on import
-init_chatbot_service()
+# NOTE: Do not auto-initialize at import time.
+# The main FastAPI app should call init_chatbot_service() during startup.
 
 # Create FastAPI router for chatbot endpoints
 

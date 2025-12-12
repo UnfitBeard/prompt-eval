@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, Input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { AuthService } from '../../Services/auth.service';
+import { AuthService } from '../../Service/auth.service';
 import { routes } from '../../app.routes';
 
 export type NavItem = {

@@ -1,0 +1,41 @@
+# Add these to your requirements.txt
+beautifulsoup4
+requests
+langchain-chroma
+langchain-google-genai
+langchain-huggingface
+langchain-core
+langchain
+genai
+langchain
+fastAPI
+tiktoken
+motor
+
+# Core
+fastapi
+uvicorn[standard]
+
+# Database
+motor
+pymongo
+
+# Authentication & Security
+python-jose[cryptography]
+# passlib's bcrypt handler is currently incompatible with bcrypt>=4 ("bcrypt" removed __about__),
+# so we use bcrypt directly.
+bcrypt
+python-multipart
+
+# Environment & Config
+pydantic
+pydantic-settings
+python-dotenv
+
+# CORS
+fastapi-cors
+
+# Utils
+httpx
+requests
+beautifulsoup4

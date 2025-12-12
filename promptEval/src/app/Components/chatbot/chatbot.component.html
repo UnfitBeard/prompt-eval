@@ -1,207 +1,290 @@
 <!-- components/chatbot/chatbot.component.html -->
-<div class="chatbot-container">
+<div class="flex h-screen bg-gray-50">
     <!-- Sidebar -->
-    <div *ngIf="showSidebar" class="chat-sidebar">
-        <div class="sidebar-header">
-            <h3>PromptPro Tutor</h3>
-            <button (click)="toggleSidebar()" class="close-sidebar">
+    <div *ngIf="showSidebar" class="w-64 md:w-80 bg-white border-r border-gray-200 flex flex-col h-full">
+        <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+            <h3 class="font-semibold text-gray-800">PromptPro Tutor</h3>
+            <button (click)="toggleSidebar()" class="md:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-500">
                 <i class="fas fa-times"></i>
             </button>
         </div>
 
         <!-- New Chat Button -->
-        <div class="sidebar-section">
-            <button (click)="createNewChat()" class="btn-new-chat">
+        <div class="p-4 border-b border-gray-200">
+            <button (click)="createNewChat()"
+                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors">
                 <i class="fas fa-plus"></i> New Chat
             </button>
         </div>
 
         <!-- Conversations List -->
-        <div class="sidebar-section">
-            <h4>Recent Chats</h4>
-            <div class="conversations-list">
-                <div *ngFor="let conv of conversations" [class.active]="activeConversation?.id === conv.id"
-                    (click)="selectConversation(conv)" class="conversation-item">
-                    <div class="conversation-preview">
-                        <i class="fas fa-comment"></i>
-                        <span class="conversation-title">{{ getConversationSummary(conv) }}</span>
+        <div class="p-4 border-b border-gray-200 flex-1 overflow-hidden">
+            <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Recent Chats</h4>
+            <div class="space-y-1 overflow-y-auto h-full">
+                <div *ngFor="let conv of conversations" [class.bg-indigo-50]="activeConversation?.id === conv.id"
+                    (click)="selectConversation(conv)"
+                    class="p-2.5 rounded-lg hover:bg-gray-100 cursor-pointer flex items-center justify-between group transition-colors">
+                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                        <div
+                            class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 flex-shrink-0">
+                            <i class="fas fa-comment text-sm"></i>
+                        </div>
+                        <span class="text-sm text-gray-700 truncate">{{ getConversationSummary(conv) }}</span>
                     </div>
-                    <div class="conversation-meta">
-                        <span class="conversation-time">
-                            {{ formatTime(conv.updated_at) }}
-                        </span>
-                        <button (click)="deleteConversation(conv, $event)" class="btn-delete">
-                            <i class="fas fa-trash"></i>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <span class="text-xs text-gray-400 hidden md:block">{{ formatTime(conv.updated_at) }}</span>
+                        <button (click)="deleteConversation(conv, $event)"
+                            class="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500 transition-opacity">
+                            <i class="fas fa-trash text-xs"></i>
                         </button>
                     </div>
                 </div>
 
-                <div *ngIf="conversations.length === 0" class="empty-conversations">
-                    <i class="fas fa-comments"></i>
-                    <p>No conversations yet</p>
+                <div *ngIf="conversations.length === 0" class="text-center py-8">
+                    <div
+                        class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3 text-gray-400">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <p class="text-sm text-gray-500">No conversations yet</p>
                 </div>
             </div>
         </div>
 
         <!-- Knowledge Base Info -->
-        <div class="sidebar-section knowledge-base-info">
-            <h4>Knowledge Base</h4>
-            <div *ngIf="isKnowledgeBaseReady()" class="kb-status ready">
+        <div class="p-4 border-t border-gray-200">
+            <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Knowledge Base</h4>
+            <div *ngIf="isKnowledgeBaseReady()"
+                class="flex items-center gap-2 mb-3 p-2 rounded-lg bg-green-50 text-green-700">
                 <i class="fas fa-check-circle"></i>
-                <span>Ready ({{ knowledgeBaseStats?.document_count || 0 }} docs)</span>
+                <span class="text-sm">Ready ({{ knowledgeBaseStats?.document_count || 0 }} docs)</span>
             </div>
-            <div *ngIf="!isKnowledgeBaseReady()" class="kb-status loading">
+            <div *ngIf="!isKnowledgeBaseReady()"
+                class="flex items-center gap-2 mb-3 p-2 rounded-lg bg-yellow-50 text-yellow-700">
                 <i class="fas fa-sync fa-spin"></i>
-                <span>Loading...</span>
+                <span class="text-sm">Loading...</span>
             </div>
-
-            <button (click)="refreshKnowledgeBase()" class="btn-refresh-kb">
+            <button (click)="refreshKnowledgeBase()"
+                class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors">
                 <i class="fas fa-sync-alt"></i> Refresh
             </button>
         </div>
     </div>
 
     <!-- Main Chat Area -->
-    <div class="chat-main" [class.sidebar-hidden]="!showSidebar">
+    <div class="flex-1 flex flex-col h-full" [class.md:ml-[-16rem]]="!showSidebar">
         <!-- Chat Header -->
-        <div class="chat-header">
-            <button (click)="toggleSidebar()" class="toggle-sidebar">
-                <i class="fas fa-bars"></i>
-            </button>
-
-            <div class="header-info">
-                <h2>Prompt Engineering Tutor</h2>
-                <p class="subtitle">Ask me anything about prompt engineering</p>
+        <div class="border-b border-gray-200 bg-white p-4 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <button (click)="toggleSidebar()" class="p-2 rounded-lg hover:bg-gray-100 text-gray-500">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div>
+                    <h2 class="font-semibold text-gray-800">Prompt Engineering Tutor</h2>
+                    <p class="text-sm text-gray-500">Ask me anything about prompt engineering</p>
+                </div>
             </div>
 
-            <div class="header-actions">
-                <button (click)="createNewChat()" class="btn-header">
-                    <i class="fas fa-plus"></i> New
+            <div class="flex items-center gap-2">
+                <button (click)="createNewChat()"
+                    class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors">
+                    <i class="fas fa-plus"></i>
+                    <span class="hidden md:inline">New Chat</span>
                 </button>
 
-                <div *ngIf="currentSources.length > 0" class="sources-indicator">
-                    <button (click)="toggleSources()" class="btn-sources">
+                <div *ngIf="currentSources.length > 0" class="relative">
+                    <button (click)="toggleSources()"
+                        class="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg flex items-center gap-1.5 transition-colors">
                         <i class="fas fa-book"></i>
-                        <span class="count">{{ currentSources.length }}</span>
+                        <span
+                            class="text-xs font-semibold bg-blue-500 text-white w-5 h-5 rounded-full flex items-center justify-center">
+                            {{ currentSources.length }}
+                        </span>
                     </button>
                 </div>
             </div>
         </div>
 
         <!-- Sources Panel -->
-        <div *ngIf="showSources && currentSources.length > 0" class="sources-panel">
-            <div class="sources-header">
-                <h4>Sources Used</h4>
-                <button (click)="toggleSources()" class="close-sources">
+        <div *ngIf="showSources && currentSources.length > 0"
+            class="bg-gray-50 border-b border-gray-200 max-h-48 overflow-y-auto">
+            <div class="p-3 border-b border-gray-200 flex justify-between items-center">
+                <h4 class="font-medium text-gray-700">Sources Used</h4>
+                <button (click)="toggleSources()" class="p-1 rounded hover:bg-gray-200 text-gray-500">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="sources-list">
-                <div *ngFor="let source of currentSources" class="source-item">
-                    <a [href]="source.source" target="_blank" class="source-link">
-                        <i class="fas fa-external-link-alt"></i>
-                        {{ source.title || source.source }}
+            <div class="p-3">
+                <div *ngFor="let source of currentSources; let last = last" [class.border-b]="!last"
+                    class="pb-2 mb-2 border-gray-200">
+                    <a [href]="source.source" target="_blank"
+                        class="text-blue-600 hover:text-blue-800 hover:underline text-sm flex items-center gap-2">
+                        <i class="fas fa-external-link-alt text-xs"></i>
+                        <span class="truncate">{{ source.title || source.source }}</span>
                     </a>
-                    <span class="source-relevance">Relevance: {{ source.relevance * 100 | number:'1.0-0' }}%</span>
+                    <div class="text-xs text-gray-500 mt-1">
+                        Relevance: {{ source.relevance * 100 | number:'1.0-0' }}%
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Messages Container -->
-        <div #messageContainer class="messages-container">
+        <!-- Messages Container - FIXED -->
+        <div #messageContainer
+            class="flex-1 overflow-y-auto bg-gradient-to-b from-white to-gray-50 p-4 md:p-6 space-y-6"
+            (scroll)="onScroll()">
+
             <!-- Welcome Message -->
-            <div *ngIf="activeConversation?.messages!.length === 0" class="welcome-message">
-                <div class="welcome-content">
-                    <div class="avatar">
-                        <i class="fas fa-robot"></i>
+            <div *ngIf="activeConversation?.messages!.length === 0" class="h-full flex items-center justify-center">
+                <div class="max-w-2xl text-center px-4">
+                    <div
+                        class="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-robot text-3xl text-white"></i>
                     </div>
-                    <h3>Hello! I'm PromptPro 👋</h3>
-                    <p>I'm your expert Prompt Engineering tutor. I can help you with:</p>
-                    <ul class="capabilities-list">
-                        <li><i class="fas fa-check"></i> Prompt design & optimization</li>
-                        <li><i class="fas fa-check"></i> Best practices & techniques</li>
-                        <li><i class="fas fa-check"></i> Code examples & templates</li>
-                        <li><i class="fas fa-check"></i> Model-specific guidance</li>
-                        <li><i class="fas fa-check"></i> Troubleshooting & debugging</li>
-                    </ul>
-                    <p class="start-hint">Type your question below to get started!</p>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Hello! I'm PromptPro 👋</h3>
+                    <p class="text-gray-600 mb-6">I'm your expert Prompt Engineering tutor. I can help you with:</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8 text-left max-w-md mx-auto">
+                        <div class="flex items-center gap-2 text-gray-700">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>Prompt design & optimization</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-gray-700">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>Best practices & techniques</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-gray-700">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>Code examples & templates</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-gray-700">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>Model-specific guidance</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-gray-700 md:col-span-2">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>Troubleshooting & debugging</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-500 italic">Type your question below to get started!</p>
                 </div>
             </div>
 
-            <!-- Messages -->
-            <div *ngFor="let msg of activeConversation?.messages" [class.user-message]="isUserMessage(msg)"
-                [class.assistant-message]="!isUserMessage(msg)" class="message">
+            <!-- Messages - ChatGPT Style -->
+            <div *ngFor="let msg of activeConversation?.messages; trackBy: trackByMessage">
+                <div class="max-w-3xl mx-auto" [class.pl-10]="!isUserMessage(msg)" [class.pr-10]="isUserMessage(msg)">
+                    <div class="flex gap-4">
+                        <!-- Avatar -->
+                        <div [class.hidden]="isUserMessage(msg)"
+                            class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-robot text-white text-sm"></i>
+                        </div>
 
-                <div class="message-avatar">
-                    <i *ngIf="isUserMessage(msg)" class="fas fa-user"></i>
-                    <i *ngIf="!isUserMessage(msg)" class="fas fa-robot"></i>
-                </div>
+                        <!-- Message Content -->
+                        <div class="flex-1">
+                            <!-- Header -->
+                            <div class="flex items-center gap-2 mb-1.5">
+                                <span class="font-semibold text-gray-800 text-sm">
+                                    {{ isUserMessage(msg) ? 'You' : 'PromptPro' }}
+                                </span>
+                                <span class="text-xs text-gray-400">{{ formatTime(msg.timestamp) }}</span>
+                            </div>
 
-                <div class="message-content">
-                    <div class="message-header">
-                        <span class="message-sender">
-                            {{ isUserMessage(msg) ? 'You' : 'PromptPro' }}
-                        </span>
-                        <span class="message-time">{{ formatTime(msg.timestamp) }}</span>
-                    </div>
+                            <!-- Text Content -->
+                            <div
+                                [class]="isUserMessage(msg) 
+                                ? 'bg-indigo-600 text-white rounded-2xl rounded-tr-none px-4 py-3 max-w-full'
+                                : 'bg-white border border-gray-200 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm max-w-full'">
+                                <div class="prose prose-sm max-w-none" [innerHTML]="formatMessageContent(msg.content)">
+                                </div>
 
-                    <div class="message-text" [innerHTML]="msg.content"></div>
+                                <!-- Code Blocks -->
+                                <div *ngIf="containsCode(msg.content)" class="mt-3">
+                                    <!-- Code styling will be handled by prose classes -->
+                                </div>
+                            </div>
 
-                    <div *ngIf="!isUserMessage(msg)" class="message-actions">
-                        <button (click)="copyToClipboard(msg.content)" class="btn-message-action">
-                            <i class="fas fa-copy"></i> Copy
-                        </button>
+                            <!-- Actions for Assistant Messages -->
+                            <div *ngIf="!isUserMessage(msg)"
+                                class="mt-2 flex items-center gap-2 opacity-0 hover:opacity-100 transition-opacity">
+                                <button (click)="copyToClipboard(msg.content)"
+                                    class="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1 p-1.5 rounded hover:bg-gray-100">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- User Avatar -->
+                        <div [class.hidden]="!isUserMessage(msg)"
+                            class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-user text-white text-sm"></i>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Typing Indicator -->
-            <div *ngIf="isProcessing" class="typing-indicator">
-                <div class="typing-avatar">
-                    <i class="fas fa-robot"></i>
-                </div>
-                <div class="typing-content">
-                    <div class="typing-dots">
-                        <span></span>
-                        <span></span>
-                        <span></span>
+            <!-- Typing Indicator - ChatGPT Style -->
+            <div *ngIf="isProcessing" class="max-w-3xl mx-auto pl-10">
+                <div class="flex gap-4">
+                    <div
+                        class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-robot text-white text-sm"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1.5">
+                            <span class="font-semibold text-gray-800 text-sm">PromptPro</span>
+                        </div>
+                        <div
+                            class="bg-white border border-gray-200 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm w-20">
+                            <div class="flex space-x-1">
+                                <div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
+                                <div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse"
+                                    [style.animation-delay]="'0.2s'"></div>
+                                <div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse"
+                                    [style.animation-delay]="'0.4s'"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Suggestions -->
-        <div *ngIf="currentSuggestions.length > 0" class="suggestions-container">
-            <div class="suggestions-header">
-                <span>Try asking:</span>
-            </div>
-            <div class="suggestions-list">
-                <button *ngFor="let suggestion of currentSuggestions" (click)="useSuggestion(suggestion)"
-                    class="suggestion-chip">
-                    {{ suggestion }}
-                </button>
+        <div *ngIf="currentSuggestions.length > 0" class="border-t border-gray-200 bg-white p-4">
+            <div class="max-w-3xl mx-auto">
+                <p class="text-sm text-gray-500 mb-3">Try asking:</p>
+                <div class="flex flex-wrap gap-2">
+                    <button *ngFor="let suggestion of currentSuggestions" (click)="useSuggestion(suggestion)"
+                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm font-medium transition-colors">
+                        {{ suggestion }}
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- Input Area -->
-        <div class="input-container">
-            <form [formGroup]="messageForm" (ngSubmit)="onSubmit()">
-                <div class="input-wrapper">
+        <!-- Input Area - Fixed at bottom -->
+        <div class="border-t border-gray-200 bg-white p-4">
+            <form [formGroup]="messageForm" (ngSubmit)="onSubmit()" class="max-w-3xl mx-auto">
+                <div class="relative flex items-end">
                     <textarea #messageInput formControlName="message"
                         placeholder="Ask me anything about prompt engineering..." (keydown.enter)="onKeyPress($event)"
-                        rows="1" class="message-input" [disabled]="isProcessing"></textarea>
+                        rows="1"
+                        class="w-full resize-none border border-gray-300 rounded-xl py-3 px-4 pr-12 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent max-h-32 overflow-y-auto"
+                        [disabled]="isProcessing" (input)="autoResize()">
+                    </textarea>
 
-                    <button type="submit" [disabled]="messageForm.invalid || isProcessing" class="send-button">
-                        <i *ngIf="!isProcessing" class="fas fa-paper-plane"></i>
-                        <i *ngIf="isProcessing" class="fas fa-spinner fa-spin"></i>
+                    <button type="submit" [disabled]="messageForm.invalid || isProcessing"
+                        class="absolute right-3 bottom-3 w-8 h-8 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors">
+                        <i *ngIf="!isProcessing" class="fas fa-paper-plane text-sm"></i>
+                        <i *ngIf="isProcessing" class="fas fa-spinner fa-spin text-sm"></i>
                     </button>
                 </div>
 
-                <div class="input-hints">
-                    <span class="hint">Press Enter to send • Shift+Enter for new line</span>
-                    <span *ngIf="knowledgeBaseStats" class="kb-hint">
+                <div class="flex justify-between items-center mt-2 px-1">
+                    <span class="text-xs text-gray-500">
+                        Press Enter to send • Shift+Enter for new line
+                    </span>
+                    <span *ngIf="knowledgeBaseStats" class="text-xs text-gray-500 flex items-center gap-1">
                         <i class="fas fa-database"></i>
-                        {{ knowledgeBaseStats.document_count || 0 }} sources available
+                        {{ knowledgeBaseStats.document_count || 0 }} sources
                     </span>
                 </div>
             </form>

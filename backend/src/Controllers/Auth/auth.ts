@@ -16,6 +16,7 @@ export const registration = async (
   next: NextFunction
 ) => {
   const { fullName, email, password } = req.body;
+  console.log('registration: ', email);
 
   if (!fullName || !password || !email) {
     console.log('Error: Missing credentials');
@@ -37,6 +38,8 @@ export const registration = async (
     await newUser.save();
 
     const tokens = await generateToken(res, newUser._id, newUser.email);
+
+    console.log('Successful registration for: ', email);
 
     res.status(201).json({
       message: 'User created successfully',

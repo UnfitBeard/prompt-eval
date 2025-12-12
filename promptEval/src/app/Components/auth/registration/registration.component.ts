@@ -10,7 +10,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router, RouteReuseStrategy, RouterLink } from '@angular/router';
-import { AuthService } from '../../Services/auth.service';
+import { AuthService } from '../../../Service/auth.service';
 
 function matchPassword(group: AbstractControl): ValidationErrors | null {
   const pass = group.get('password')?.value ?? '';
@@ -105,13 +105,14 @@ export class RegistrationComponent {
       this.form.markAllAsTouched();
       return;
     }
-    const { fullName, email, password, organization } = this.form.value;
-    const payload = { fullName, email, password };
+    const payload = this.form.getRawValue();
     console.log('REGISTER →', payload);
 
     this.authService.register(payload).subscribe({
       next: () => this.router.navigate(['dashboard']),
-      error: (err) => console.error(err),
+      error: (err) => {
+        console.error(err);
+      },
     });
   }
 

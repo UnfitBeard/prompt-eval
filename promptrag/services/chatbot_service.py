@@ -83,9 +83,17 @@ class ChatbotService:
                 timeout=30
             )
 
-            # Initialize embeddings
+            # Initialize embeddings (CPU-only)
+            # NOTE: model_kwargs is supported by langchain_huggingface and is passed through to
+            # the underlying embedding model.
             self.embeddings = HuggingFaceEmbeddings(
-                model_name="all-MiniLM-L6-v2"
+                model_name="all-MiniLM-L6-v2",
+                # langchain_huggingface forwards model_kwargs directly into SentenceTransformer(..., **model_kwargs)
+                # so we nest SentenceTransformer's own model_kwargs inside.
+                model_kwargs={
+                    "device": "cpu",
+                    "model_kwargs": {"low_cpu_mem_usage": False},
+                },
             )
 
             # Load or create vector store

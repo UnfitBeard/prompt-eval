@@ -6,13 +6,14 @@ import { DashboardComponent } from './Components/dashboard/dashboard.component';
 import { AdminDashboardComponent } from './Components/admin-dashboard/admin-dashboard.component';
 import { AdminTemplateCreatorComponent } from './Components/admin-template-creator/admin-template-creator.component';
 import { AdminProfileComponent } from './Components/admin-profile/admin-profile.component';
-import { RegistrationComponent } from './Components/registration/registration.component';
-import { LoginComponent } from './Components/login/login.component';
+import { RegistrationComponent } from './Components/auth/registration/registration.component';
+import { LoginComponent } from './Components/auth/login/login.component';
 import { authGuard } from './Guards/auth.guard';
 import { PromptEvidenceComponent } from './Components/prompt-evidence/prompt-evidence.component';
 import { IterationAnalysisComponent } from './Components/iteration-analysis/iteration-analysis.component';
 import { PromptEvalV2Component } from './Components/prompt-eval-v2/prompt-eval-v2.component';
 import { ChatbotComponent } from './Components/chatbot/chatbot.component';
+import { CourseListComponent } from './Components/courses/course-list/course-list.component';
 
 export const routes: Routes = [
   {
@@ -44,6 +45,13 @@ export const routes: Routes = [
     path: 'chat',
     component: ChatbotComponent,
     title: 'PromptPro Tutor',
+    data: { hideFooter: true },
+  },
+  {
+    path: 'courses',
+    component: CourseListComponent,
+    title: 'Courses List',
+    data: { hideFooter: true },
   },
   {
     path: 'trace/:id',

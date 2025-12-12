@@ -1,10 +1,12 @@
-// components/chatbot/chatbot.component.ts
 import {
   Component,
   OnInit,
   ViewChild,
   ElementRef,
   AfterViewChecked,
+  ChangeDetectorRef,
+  OnDestroy,
+  AfterViewInit,
 } from '@angular/core';
 import {
   FormBuilder,
@@ -19,7 +21,7 @@ import {
   Conversation,
   ChatResponse,
 } from '../../Service/chatbot.service';
-import { Observable } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { CommonModule, DecimalPipe } from '@angular/common';
 
 @Component({
@@ -28,7 +30,9 @@ import { CommonModule, DecimalPipe } from '@angular/common';
   templateUrl: './chatbot.component.html',
   styleUrls: ['./chatbot.component.css'],
 })
-export class ChatbotComponent implements OnInit, AfterViewChecked {
+export class ChatbotComponent
+  implements OnInit, AfterViewChecked, OnDestroy, AfterViewInit
+{
   @ViewChild('messageContainer') private messageContainer!: ElementRef;
   @ViewChild('messageInput') private messageInput!: ElementRef;
 
@@ -47,36 +51,74 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
   currentSuggestions: string[] = [];
   currentSources: any[] = [];
 
-  // Typing indicator
-  isTyping = false;
+  // Track if we should scroll
+  private shouldScroll = false;
+  private subscriptions: Subscription[] = [];
 
-  constructor(private fb: FormBuilder, private chatbotService: ChatbotService) {
+  constructor(
+    private fb: FormBuilder,
+    private chatbotService: ChatbotService,
+    private cdRef: ChangeDetectorRef
+  ) {
     this.messageForm = this.fb.group({
       message: ['', [Validators.required, Validators.minLength(2)]],
     });
   }
 
   ngOnInit(): void {
-    // Subscribe to active conversation
-    this.chatbotService.activeConversation$.subscribe((conversation) => {
-      this.activeConversation = conversation;
-      this.scrollToBottom();
-    });
+    console.log('ChatbotComponent ngOnInit');
+
+    // Subscribe to active conversation with change detection
+    this.subscriptions.push(
+      this.chatbotService.activeConversation$.subscribe((conversation) => {
+        console.log('Active conversation updated:', {
+          id: conversation?.id,
+          messageCount: conversation?.messages?.length,
+        });
+
+        // Create a new reference to trigger change detection
+        this.activeConversation = conversation ? { ...conversation } : null;
+
+        // Force change detection
+        this.cdRef.detectChanges();
+
+        // Mark that we should scroll
+        this.shouldScroll = true;
+
+        // Scroll after a short delay to ensure DOM is updated
+        setTimeout(() => this.scrollToBottom(true), 100);
+      })
+    );
 
     // Subscribe to conversations list
-    this.chatbotService.conversations$.subscribe((conversations) => {
-      this.conversations = conversations;
-    });
+    this.subscriptions.push(
+      this.chatbotService.conversations$.subscribe((conversations) => {
+        this.conversations = conversations;
+      })
+    );
 
     // Subscribe to loading state
-    this.chatbotService.loading$.subscribe((loading) => {
-      this.isProcessing = loading;
-    });
+    this.subscriptions.push(
+      this.chatbotService.loading$.subscribe((loading) => {
+        console.log('Loading state:', loading);
+        this.isProcessing = loading;
+
+        // If loading just finished (response received), scroll
+        if (!loading) {
+          setTimeout(() => {
+            this.shouldScroll = true;
+            this.scrollToBottom(true);
+          }, 200);
+        }
+      })
+    );
 
     // Subscribe to knowledge base stats
-    this.chatbotService.knowledgeBaseStats$.subscribe((stats) => {
-      this.knowledgeBaseStats = stats;
-    });
+    this.subscriptions.push(
+      this.chatbotService.knowledgeBaseStats$.subscribe((stats) => {
+        this.knowledgeBaseStats = stats;
+      })
+    );
 
     // Load initial data
     this.loadInitialData();
@@ -85,11 +127,33 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
     setTimeout(() => this.focusInput(), 100);
   }
 
-  ngAfterViewChecked(): void {
-    this.scrollToBottom();
+  ngAfterViewInit(): void {
+    // Initial scroll
+    this.scrollToBottom(true);
+
+    // Setup auto-resize
+    setTimeout(() => {
+      const textarea = this.messageInput?.nativeElement;
+      if (textarea) {
+        textarea.addEventListener('input', () => this.autoResize());
+      }
+    }, 100);
   }
 
-  // In chatbot.component.ts - Update the loadInitialData method
+  ngAfterViewChecked(): void {
+    // Only scroll when we have new content
+    if (this.shouldScroll) {
+      console.log('Scrolling to bottom, shouldScroll flag');
+      this.scrollToBottom();
+      this.shouldScroll = false;
+    }
+  }
+
+  ngOnDestroy(): void {
+    // Clean up subscriptions
+    this.subscriptions.forEach((sub) => sub.unsubscribe());
+  }
+
   loadInitialData(): void {
     // Check for saved active conversation
     const savedConversationId = localStorage.getItem('activeChatConversation');
@@ -98,16 +162,14 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
       // Try to load the saved conversation
       this.chatbotService.getConversation(savedConversationId).subscribe({
         next: (conversation) => {
-          // Success - conversation exists on backend
           console.log('Loaded saved conversation:', conversation.id);
         },
         error: (error) => {
-          // If we get a 404, the conversation doesn't exist on backend
           console.warn(
             'Saved conversation not found on server, creating new one'
           );
-          localStorage.removeItem('activeChatConversation'); // Clean up
-          this.createNewChat(); // Start fresh
+          localStorage.removeItem('activeChatConversation');
+          this.createNewChat();
         },
       });
     } else if (this.conversations.length === 0) {
@@ -120,7 +182,7 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
   }
 
   /**
-   * Send a message
+   * Send a message - FIXED VERSION
    */
   onSubmit(): void {
     if (this.messageForm.invalid || this.isProcessing) {
@@ -128,23 +190,34 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
     }
 
     const message = this.messageForm.get('message')?.value;
+    console.log('Sending message:', message);
 
     if (!this.activeConversation) {
+      console.log('No active conversation, creating new one');
       this.createNewChat();
+      return;
     }
 
-    // Send message
+    // Clear form and reset textarea
+    this.messageForm.reset();
+    const textarea = this.messageInput?.nativeElement;
+    if (textarea) {
+      textarea.style.height = 'auto';
+    }
+
+    // Send message to backend
     this.chatbotService
       .sendMessage(message, this.activeConversation?.id)
       .subscribe({
         next: (response) => {
-          this.currentSuggestions = response.suggestions;
-          this.currentSources = response.sources;
-          this.messageForm.reset();
+          console.log('Message sent successfully:', response);
+          this.currentSuggestions = response.suggestions || [];
+          this.currentSources = response.sources || [];
           this.focusInput();
         },
         error: (error) => {
           console.error('Failed to send message:', error);
+
           // Add error message to chat
           if (this.activeConversation) {
             const errorMessage: ChatMessage = {
@@ -152,31 +225,52 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
               content: 'Sorry, I encountered an error. Please try again.',
               timestamp: new Date(),
             };
-            this.activeConversation.messages.push(errorMessage);
+
+            // Update conversation with error
+            const updatedConv = {
+              ...this.activeConversation,
+              messages: [...this.activeConversation.messages, errorMessage],
+            };
+
+            this.chatbotService.setActiveConversation(updatedConv);
           }
+
+          this.focusInput();
         },
       });
   }
 
   /**
-   * Create a new chat
+   * Create a new chat - FIXED
    */
   createNewChat(): void {
-    this.chatbotService.createNewConversation();
+    console.log('Creating new chat');
+    // Clear current state
     this.currentSuggestions = [];
     this.currentSources = [];
     this.showSources = false;
+
+    // Let service create new conversation
+    this.chatbotService.createNewConversation();
+
     this.focusInput();
   }
 
   /**
-   * Select a conversation
+   * Select a conversation - FIXED
    */
   selectConversation(conversation: Conversation): void {
-    this.chatbotService.setActiveConversation(conversation);
+    console.log('Selecting conversation:', conversation.id);
+    // Clear current suggestions/sources
     this.currentSuggestions = [];
     this.currentSources = [];
     this.showSources = false;
+
+    // Let service handle the selection
+    this.chatbotService.setActiveConversation(conversation);
+
+    // Mark for scroll
+    this.shouldScroll = true;
 
     // Close sidebar on mobile
     if (window.innerWidth < 768) {
@@ -186,118 +280,52 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
     this.focusInput();
   }
 
-  /**
-   * Delete a conversation
-   */
-  deleteConversation(conversation: Conversation, event?: MouseEvent): void {
-    if (event) {
-      event.stopPropagation();
-    }
-
-    if (confirm('Are you sure you want to delete this conversation?')) {
-      this.chatbotService.deleteConversation(conversation.id).subscribe();
-    }
+  // Add this method to properly track messages
+  trackByMessage(index: number, message: ChatMessage): string {
+    // Use a combination of timestamp and index for uniqueness
+    // Simplified version without hashCode to avoid the error
+    const timestamp = message.timestamp
+      ? new Date(message.timestamp).getTime()
+      : Date.now();
+    const contentPreview = message.content.substring(0, 20);
+    return `${message.role}-${timestamp}-${contentPreview}-${index}`;
   }
 
   /**
-   * Use a suggestion
+   * Improved scroll to bottom
    */
-  useSuggestion(suggestion: string): void {
-    this.messageForm.patchValue({ message: suggestion });
-    this.onSubmit();
-  }
-
-  /**
-   * Copy message to clipboard
-   */
-  copyToClipboard(text: string): void {
-    navigator.clipboard.writeText(text).then(() => {
-      // Show success toast
-      console.log('Copied to clipboard');
-    });
-  }
-
-  /**
-   * Refresh knowledge base
-   */
-  refreshKnowledgeBase(): void {
-    this.chatbotService.refreshKnowledgeBase().subscribe({
-      next: () => {
-        // Show success message
-        console.log('Knowledge base refreshed');
-      },
-      error: (error) => {
-        console.error('Failed to refresh knowledge base:', error);
-      },
-    });
-  }
-
-  /**
-   * Format message time
-   */
-  formatTime(timestamp: any): string {
-    return this.chatbotService.formatMessageTime(timestamp);
-  }
-
-  /**
-   * Check if message is from user
-   */
-  isUserMessage(message: ChatMessage): boolean {
-    return this.chatbotService.isUserMessage(message);
-  }
-
-  /**
-   * Get conversation summary for display
-   */
-  getConversationSummary(conversation: Conversation): string {
-    return this.chatbotService.getConversationSummary(conversation);
-  }
-
-  /**
-   * Toggle sidebar
-   */
-  toggleSidebar(): void {
-    this.showSidebar = !this.showSidebar;
-  }
-
-  /**
-   * Toggle sources display
-   */
-  toggleSources(): void {
-    this.showSources = !this.showSources;
-  }
-
-  /**
-   * Scroll to bottom of message container
-   */
-  // In chatbot.component.ts - Fix the scrollToBottom method
-  private scrollToBottom(): void {
-    try {
-      setTimeout(() => {
+  private scrollToBottom(force: boolean = false): void {
+    setTimeout(() => {
+      try {
         if (this.messageContainer?.nativeElement) {
           const element = this.messageContainer.nativeElement;
-          // Only scroll if we're near the bottom
-          const isNearBottom =
-            element.scrollHeight - element.scrollTop - element.clientHeight <
-            100;
 
-          if (isNearBottom) {
-            element.scrollTop = element.scrollHeight;
+          // Always scroll when force is true
+          if (force) {
+            console.log('Forcing scroll to bottom');
+            element.scrollTo({
+              top: element.scrollHeight,
+              behavior: 'smooth',
+            });
+          } else {
+            // Only scroll if we're near the bottom
+            const isNearBottom =
+              element.scrollHeight - element.scrollTop - element.clientHeight <
+              150;
+
+            if (isNearBottom) {
+              console.log('Auto-scrolling to bottom (near bottom)');
+              element.scrollTo({
+                top: element.scrollHeight,
+                behavior: 'smooth',
+              });
+            }
           }
         }
-      }, 100);
-    } catch (err) {
-      console.error('Scroll error:', err);
-    }
-  }
-
-  // Add a method to manually scroll
-  scrollManually(event: Event): void {
-    // This can be called from a button or UI control
-    const element = this.messageContainer?.nativeElement;
-    if (element) {
-      element.scrollTop = 0; // Scroll to top
-    }
+      } catch (err) {
+        console.error('Scroll error:', err);
+      }
+    }, 50);
   }
 
   /**
@@ -305,7 +333,7 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
    */
   private focusInput(): void {
     setTimeout(() => {
-      if (this.messageInput) {
+      if (this.messageInput?.nativeElement) {
         this.messageInput.nativeElement.focus();
       }
     }, 100);
@@ -322,9 +350,114 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
   }
 
   /**
-   * Check if knowledge base is ready
+   * Auto-resize textarea
    */
+  autoResize(): void {
+    const textarea = this.messageInput?.nativeElement;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 128) + 'px';
+    }
+  }
+
+  /**
+   * Handle scroll events
+   */
+  onScroll(): void {
+    // You can add scroll-based logic here
+  }
+
+  /**
+   * Check if message contains code for styling
+   */
+  containsCode(text: string): boolean {
+    return (
+      text.includes('```') || text.includes('<code>') || text.includes('`')
+    );
+  }
+
+  // Other existing methods...
+  deleteConversation(conversation: Conversation, event?: MouseEvent): void {
+    if (event) {
+      event.stopPropagation();
+    }
+
+    if (confirm('Are you sure you want to delete this conversation?')) {
+      this.chatbotService.deleteConversation(conversation.id).subscribe();
+    }
+  }
+
+  useSuggestion(suggestion: string): void {
+    this.messageForm.patchValue({ message: suggestion });
+    this.onSubmit();
+  }
+
+  copyToClipboard(text: string): void {
+    navigator.clipboard.writeText(text).then(() => {
+      console.log('Copied to clipboard');
+    });
+  }
+
+  refreshKnowledgeBase(): void {
+    this.chatbotService.refreshKnowledgeBase().subscribe({
+      next: () => {
+        console.log('Knowledge base refreshed');
+      },
+      error: (error) => {
+        console.error('Failed to refresh knowledge base:', error);
+      },
+    });
+  }
+
+  formatTime(timestamp: any): string {
+    return this.chatbotService.formatMessageTime(timestamp);
+  }
+
+  isUserMessage(message: ChatMessage): boolean {
+    return this.chatbotService.isUserMessage(message);
+  }
+
+  getConversationSummary(conversation: Conversation): string {
+    return this.chatbotService.getConversationSummary(conversation);
+  }
+
+  toggleSidebar(): void {
+    this.showSidebar = !this.showSidebar;
+  }
+
+  toggleSources(): void {
+    this.showSources = !this.showSources;
+  }
+
   isKnowledgeBaseReady(): boolean {
     return this.knowledgeBaseStats?.status === 'ready';
+  }
+
+  // In chatbot.component.ts
+  formatMessageContent(content: string): string {
+    if (!content) return '';
+
+    // Basic formatting - convert line breaks
+    let formatted = content.replace(/\n/g, '<br>');
+
+    // Convert markdown bold
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+    // Convert markdown italic
+    formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+    // Convert markdown code blocks (simple)
+    formatted = formatted.replace(
+      /```([\s\S]*?)```/g,
+      '<pre class="bg-gray-900 text-white p-4 rounded my-2 overflow-x-auto"><code>$1</code></pre>'
+    );
+
+    // Convert inline code
+    formatted = formatted.replace(
+      /`([^`]+)`/g,
+      '<code class="bg-gray-100 px-1 rounded">$1</code>'
+    );
+
+    return formatted;
   }
 }

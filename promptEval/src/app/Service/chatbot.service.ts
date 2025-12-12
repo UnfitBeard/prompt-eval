@@ -64,39 +64,6 @@ export class ChatbotService {
   }
 
   /**
-   * Send a message to the chatbot
-   */
-  sendMessage(
-    message: string,
-    conversationId?: string
-  ): Observable<ChatResponse> {
-    this.loadingSubject.next(true);
-
-    const request: ChatRequest = {
-      message: message.trim(),
-      conversation_id: conversationId,
-      include_context: true,
-    };
-
-    return this.http
-      .post<ChatResponse>(`${this.apiUrl}/api/v1/chat/ask`, request)
-      .pipe(
-        tap((response) => {
-          // Update or create conversation
-          this.updateConversationWithResponse(response);
-          this.loadingSubject.next(false);
-        }),
-        catchError((error) => {
-          this.loadingSubject.next(false);
-          console.error('Chat error:', error);
-          return throwError(
-            () => new Error('Failed to send message. Please try again.')
-          );
-        })
-      );
-  }
-
-  /**
    * Load all conversations
    */
   loadConversations(limit: number = 20): Observable<Conversation[]> {
@@ -151,22 +118,6 @@ export class ChatbotService {
     } else {
       localStorage.removeItem('activeChatConversation');
     }
-  }
-
-  /**
-   * Create a new conversation
-   */
-  createNewConversation(): void {
-    const newConversation: Conversation = {
-      id: this.generateId(),
-      messages: [],
-      created_at: new Date(),
-      updated_at: new Date(),
-      title: 'New Chat',
-    };
-
-    this.setActiveConversation(newConversation);
-    this.addConversationToList(newConversation);
   }
 
   /**
@@ -266,34 +217,6 @@ export class ChatbotService {
   }
 
   /**
-   * Update conversation with new response
-   */
-  private updateConversationWithResponse(response: ChatResponse): void {
-    const currentConversation = this.activeConversationSubject.value;
-
-    if (
-      !currentConversation ||
-      currentConversation.id !== response.conversation_id
-    ) {
-      // Load the conversation from the response
-      this.getConversation(response.conversation_id).subscribe();
-      return;
-    }
-
-    // Update conversation locally
-    const updatedConversation: Conversation = {
-      ...currentConversation,
-      updated_at: new Date(),
-      messages: [...currentConversation.messages],
-    };
-
-    this.setActiveConversation(updatedConversation);
-
-    // Update in conversations list
-    this.updateConversationInList(updatedConversation);
-  }
-
-  /**
    * Add conversation to list
    */
   private addConversationToList(conversation: Conversation): void {
@@ -325,5 +248,133 @@ export class ChatbotService {
    */
   private generateId(): string {
     return 'conv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  }
+
+  // services/chatbot.service.ts - Update this method
+
+  /**
+   * Update conversation with new response
+   */
+  private updateConversationWithResponse(response: ChatResponse): void {
+    const currentConversation = this.activeConversationSubject.value;
+
+    console.log('Updating conversation with response:', {
+      currentId: currentConversation?.id,
+      responseId: response.conversation_id,
+      hasMessages: currentConversation?.messages?.length,
+    });
+
+    if (
+      !currentConversation ||
+      currentConversation.id !== response.conversation_id
+    ) {
+      // Load the conversation from the response
+      console.log('Loading conversation from response');
+      this.getConversation(response.conversation_id).subscribe();
+      return;
+    }
+
+    // Create assistant message
+    const assistantMessage: ChatMessage = {
+      role: 'assistant',
+      content: response.response, // Note: using response.response not response.content
+      timestamp: new Date(),
+    };
+
+    // Create a NEW conversation object with the updated messages
+    const updatedConversation: Conversation = {
+      ...currentConversation,
+      updated_at: new Date(),
+      messages: [...currentConversation.messages, assistantMessage], // Add assistant message
+    };
+
+    console.log(
+      'Updated conversation messages:',
+      updatedConversation.messages.length
+    );
+
+    // Update the active conversation
+    this.setActiveConversation(updatedConversation);
+
+    // Update in conversations list
+    this.updateConversationInList(updatedConversation);
+  }
+
+  /**
+   * Send a message to the chatbot - Also update this method
+   */
+  sendMessage(
+    message: string,
+    conversationId?: string
+  ): Observable<ChatResponse> {
+    this.loadingSubject.next(true);
+
+    // First, add user message to local state immediately
+    const userMessage: ChatMessage = {
+      role: 'user',
+      content: message.trim(),
+      timestamp: new Date(),
+    };
+
+    let currentConv = this.activeConversationSubject.value;
+
+    // If no conversation exists, create a new one
+    if (!currentConv) {
+      this.createNewConversation();
+      currentConv = this.activeConversationSubject.value;
+    }
+
+    if (currentConv) {
+      // Add user message to local conversation immediately
+      const tempConversation: Conversation = {
+        ...currentConv,
+        updated_at: new Date(),
+        messages: [...currentConv.messages, userMessage],
+      };
+
+      this.setActiveConversation(tempConversation);
+      this.updateConversationInList(tempConversation);
+    }
+
+    const request: ChatRequest = {
+      message: message.trim(),
+      conversation_id: currentConv?.id || conversationId,
+      include_context: true,
+    };
+
+    return this.http
+      .post<ChatResponse>(`${this.apiUrl}/api/v1/chat/ask`, request)
+      .pipe(
+        tap((response) => {
+          console.log('Received response:', response);
+          // Update or create conversation with assistant response
+          this.updateConversationWithResponse(response);
+          this.loadingSubject.next(false);
+        }),
+        catchError((error) => {
+          this.loadingSubject.next(false);
+          console.error('Chat error:', error);
+          return throwError(
+            () => new Error('Failed to send message. Please try again.')
+          );
+        })
+      );
+  }
+
+  /**
+   * Create a new conversation - Update this method too
+   */
+  createNewConversation(): void {
+    const newConversation: Conversation = {
+      id: this.generateId(),
+      messages: [],
+      created_at: new Date(),
+      updated_at: new Date(),
+      title: 'New Chat',
+    };
+
+    console.log('Creating new conversation:', newConversation.id);
+    this.setActiveConversation(newConversation);
+    this.addConversationToList(newConversation);
   }
 }

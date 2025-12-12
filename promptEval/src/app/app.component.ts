@@ -29,6 +29,7 @@ export class AppComponent {
     { label: 'PromptEvidence', href: '/prompt-evidence' },
     { label: 'Templates', href: '/user-templates' },
     { label: 'Chat', href: '/chat' },
+    { label: 'Courses', href: '/courses' },
   ];
 
   showNavbar = signal(true);

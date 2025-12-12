@@ -8,7 +8,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../Services/auth.service';
+import { AuthService } from '../../../Service/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -65,7 +65,11 @@ export class LoginComponent {
       .subscribe({
         next: () => this.router.navigate(['dashboard']),
         error: (err) => {
-          this.errorMsg = err.error.message || 'Login failed. Please try again';
+          this.errorMsg =
+            err?.error?.message ||
+            err?.error?.detail ||
+            err?.message ||
+            'Login failed. Please try again';
           console.error(this.errorMsg);
         },
       });

@@ -1,30 +1,36 @@
 # server.py - REDESIGNED FOR SPEED
+from api.routers import (
+    auth, courses, lessons, progress
+)
+from services.prompt_evaluator_endpoint import chatbot_router, init_chatbot_service
+from langchain.messages import SystemMessage, HumanMessage
+from langchain_google_genai import ChatGoogleGenerativeAI
+from prompts import EVAL_SYSTEM_PROMPT, IMPROVE_SYSTEM_PROMPT, build_improve_user_message
+from scorer import load_scorer, score_prompt, apply_vagueness_penalty, TARGETS
+from utils import Trace, logger, clean_text, extract_json_inside_codeblock
+import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import asyncio
+import sqlite3
+from core.database import mongodb
+from contextlib import asynccontextmanager
+from chromadb import PersistentClient
+from sentence_transformers import SentenceTransformer
+from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException, BackgroundTasks
+import numpy as np
 import uuid
 import time
 import json
 import os
 from typing import List, Optional, Dict
 from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
-import numpy as np
-from fastapi import FastAPI, HTTPException, BackgroundTasks
-from pydantic import BaseModel
-from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
-from sentence_transformers import SentenceTransformer
-from chromadb import PersistentClient
-import sqlite3
-import asyncio
+# Add the parent directory to Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from utils import Trace, logger, clean_text, extract_json_inside_codeblock
-from scorer import load_scorer, score_prompt, apply_vagueness_penalty, TARGETS
-from prompts import EVAL_SYSTEM_PROMPT, IMPROVE_SYSTEM_PROMPT, build_improve_user_message
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.messages import SystemMessage, HumanMessage
-from pydantic import BaseModel
-from services.chatbot_service import ChatbotService
-from services.prompt_evaluator_endpoint import chatbot_router
 
 load_dotenv()
 
@@ -42,7 +48,7 @@ _ = EMBEDDER_SCORER.encode(
 
 CHROMA_PERSIST_DIR = "./vectorstore"
 EMBED_MODEL_NAME = "all-MiniLM-L6-v2"  # Fast, lightweight
-GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # Thresholds
 SCORE_THRESHOLD = 6.0  # Below this, we suggest improvements
@@ -76,11 +82,92 @@ init_db()
 # ======================
 # FASTAPI APP
 # ======================
-app = FastAPI(title="Fast Prompt Evaluator")
+
+
+# Globals that are expensive to initialize (and can fail depending on ML stack)
+rag_embedder = None
+chroma_client = None
+rag_collection = None
+llm_fast = None
+llm_smart = None
+executor = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global rag_embedder, chroma_client, rag_collection, llm_fast, llm_smart, executor
+
+    # Startup
+    await mongodb.connect()
+
+    # Start chatbot init in the background (non-fatal if it fails)
+    try:
+        init_chatbot_service()
+    except Exception as e:
+        logger.error(f"Chatbot init failed during startup: {e}")
+
+    # Thread pool for parallel operations
+    executor = ThreadPoolExecutor(max_workers=4)
+
+    # Initialize RAG embedder + vector store (CPU-only). If it fails, keep service running.
+    try:
+        rag_embedder = SentenceTransformer(
+            EMBED_MODEL_NAME,
+            device="cpu",
+            model_kwargs={"low_cpu_mem_usage": False}
+        )
+
+        chroma_client = PersistentClient(path=CHROMA_PERSIST_DIR)
+        try:
+            rag_collection = chroma_client.get_collection("prompts")
+        except Exception:
+            rag_collection = chroma_client.create_collection("prompts")
+
+    except Exception as e:
+        logger.error(f"RAG embedder init failed: {e}")
+        rag_embedder = None
+        chroma_client = None
+        rag_collection = None
+
+    # Initialize LLM clients (requires GEMINI_API_KEY)
+    if GEMINI_API_KEY:
+        llm_fast = ChatGoogleGenerativeAI(
+            model="gemini-2.5-flash-lite",
+            temperature=0,
+            google_api_key=GEMINI_API_KEY,
+            max_tokens=500,
+            timeout=10,
+        )
+
+        llm_smart = ChatGoogleGenerativeAI(
+            model="gemini-2.5-flash-lite",
+            temperature=0,
+            google_api_key=GEMINI_API_KEY,
+            max_tokens=1000,
+            timeout=30,
+        )
+    else:
+        logger.warning(
+            "GEMINI_API_KEY not set; prompt evaluation endpoints that require LLM will fail")
+
+    print("🚀 Application startup complete")
+    yield
+
+    # Shutdown
+    try:
+        if executor:
+            executor.shutdown(wait=True)
+    finally:
+        await mongodb.disconnect()
+        print("👋 Application shutdown complete")
+
+
+app = FastAPI(title="Fast Prompt Evaluator", lifespan=lifespan)
+
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:4200"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -88,40 +175,16 @@ app.add_middleware(
 
 # Register routers
 app.include_router(chatbot_router, prefix="/api/v1")
+app.include_router(auth.router, prefix="/api/v1")
+app.include_router(courses.router, prefix="/api/v1")
+app.include_router(lessons.router, prefix="/api/v1")
+app.include_router(progress.router, prefix="/api/v1")
 
 
 # ======================
 # SERVICES INITIALIZATION
 # ======================
-# Use a faster embedder for RAG
-rag_embedder = SentenceTransformer(EMBED_MODEL_NAME)
-
-# Chroma client
-chroma_client = PersistentClient(path=CHROMA_PERSIST_DIR)
-try:
-    rag_collection = chroma_client.get_collection("prompts")
-except:
-    rag_collection = chroma_client.create_collection("prompts")
-
-# LLM client (use faster model for initial eval)
-llm_fast = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash-lite",  # Faster than 2.5-flash
-    temperature=0,
-    google_api_key=GEMINI_API_KEY,
-    max_tokens=500,
-    timeout=10,  # Shorter timeout
-)
-
-llm_smart = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash-lite",
-    temperature=0,
-    google_api_key=GEMINI_API_KEY,
-    max_tokens=1000,
-    timeout=30,
-)
-
-# Thread pool for parallel operations
-executor = ThreadPoolExecutor(max_workers=4)
+# Initialized in lifespan() to avoid import-time crashes.
 
 # ======================
 # MODELS
@@ -178,14 +241,29 @@ def save_to_history(eval_result: dict):
 
 async def score_prompt_async(prompt: str):
     """Score prompt in thread pool"""
+    global executor
+    if executor is None:
+        executor = ThreadPoolExecutor(max_workers=4)
+
     loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(executor, score_prompt, prompt,
-                                      EMBEDDER_SCORER, REG, SCALER, TARGETS_SCORER)
+    return await loop.run_in_executor(
+        executor,
+        score_prompt,
+        prompt,
+        EMBEDDER_SCORER,
+        REG,
+        SCALER,
+        TARGETS_SCORER,
+    )
 
 
 async def retrieve_similar_async(prompt: str, k: int):
     """Retrieve similar prompts in parallel"""
     def _retrieve():
+        # If RAG isn't initialized (e.g. CPU embedding load failed), degrade gracefully.
+        if rag_embedder is None or rag_collection is None:
+            return []
+
         clean = clean_text(prompt)
         if not clean:
             return []
@@ -211,12 +289,20 @@ async def retrieve_similar_async(prompt: str, k: int):
             })
         return similar
 
+    global executor
+    if executor is None:
+        executor = ThreadPoolExecutor(max_workers=4)
+
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(executor, _retrieve)
 
 
 async def generate_suggestions_fast(prompt: str, scores: Dict, similar_prompts: List):
     """Fast LLM call for suggestions only"""
+    if llm_fast is None:
+        # No LLM available; caller will fall back to heuristic suggestions.
+        return []
+
     # Prepare context from similar prompts
     context = "\n".join([
         f"Example {i+1}: {p['content'][:200]}..."
@@ -267,6 +353,9 @@ Provide 1-3 specific suggestions:""")
 
 async def generate_improved_version(prompt: str, suggestions: List[str], similar_prompts: List):
     """Generate improved prompt (only if really needed)"""
+    if llm_smart is None:
+        return None
+
     if not suggestions:
         return None
 
@@ -459,7 +548,12 @@ async def health():
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    executor.shutdown(wait=True)
+    # Kept for backwards compatibility, but lifespan() is the primary shutdown hook now.
+    try:
+        if executor:
+            executor.shutdown(wait=True)
+    except Exception:
+        pass
     logger.info("Executor shutdown complete")
 
 if __name__ == "__main__":
