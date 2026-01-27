@@ -48,7 +48,7 @@ export class UserTemplatesComponent {
 
   constructor(
     private templateService: TemplatesService,
-    private clipboard: Clipboard
+    private clipboard: Clipboard,
   ) {}
 
   get filteredCards(): TemplateCard[] {
@@ -59,17 +59,17 @@ export class UserTemplatesComponent {
           !this.query ||
           (c.title + ' ' + c.description)
             .toLowerCase()
-            .includes(this.query.toLowerCase())
+            .includes(this.query.toLowerCase()),
       )
       .filter(
         (c) =>
           this.filters.difficulty.size === 0 ||
-          this.filters.difficulty.has(c.difficulty)
+          this.filters.difficulty.has(c.difficulty),
       )
       .filter(
         (c) =>
           (this.filters.rating || 0) === 0 ||
-          Math.floor(c.rating) >= this.filters.rating
+          Math.floor(c.rating) >= this.filters.rating,
       );
   }
 
@@ -89,7 +89,7 @@ export class UserTemplatesComponent {
     this.copied = true;
     setTimeout(() => (this.copied = false), 2000);
   }
-  
+
   async copyTemplate(title: string, content: string) {
     const text = `${title}\n\n${content}`;
     try {
@@ -105,9 +105,10 @@ export class UserTemplatesComponent {
   }
 
   getAllTemplates() {
-    this.templateService.getTemplates().subscribe({
-      next: (resp) => {
-        this.cards = this.mapToTemplateCards(resp);
+    this.templateService.getTemplatesList().subscribe({
+      next: (resp: any) => {
+        console.log('Templates response:', resp);
+        this.cards = this.mapToTemplateCards(resp.data);
       },
       error: (err) => {
         console.error(err);
@@ -116,7 +117,7 @@ export class UserTemplatesComponent {
   }
 
   mapToTemplateCards(response: PromptsResponse): TemplateCard[] {
-    return response.templates.map((tpl) => ({
+    return response.templates.map((tpl: any) => ({
       title: tpl.title ?? 'Untitled Template',
       description:
         tpl.description ?? 'No description available for this template.',

@@ -1,200 +1,39 @@
-<div class="mx-auto max-w-[1200px] px-4 py-6">
+<div class="mx-auto max-w-[1200px] px-4 py-6 space-y-5">
+  <!-- High-level inferred statistics -->
+  <app-inferred-stats-panel
+    [summary]="summary"
+    [stats]="stats"
+    [loading]="courseHistoryLoading && !summary"
+  ></app-inferred-stats-panel>
 
-    <!-- KPI CARDS -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div *ngFor="let m of metrics" class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-            <div class="flex items-center justify-between">
-                <div class="text-sm text-gray-500">{{ m.label }}</div>
-                <!-- simple glyphs -->
-                <svg *ngIf="m.label === 'Total Prompts'" class="h-5 w-5 text-blue-600" viewBox="0 0 24 24"
-                    fill="currentColor">
-                    <path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Z" />
-                    <path d="M11 6h2v7h-2zM11 15h2v2h-2z" />
-                </svg>
-                <svg *ngIf="m.label === 'Average Score'" class="h-5 w-5 text-blue-600" viewBox="0 0 24 24"
-                    fill="currentColor">
-                    <path
-                        d="m12 17.27 6.18 3.73-1.64-7.03 5.46-4.73-7.19-.62L12 2 9.19 8.62l-7.19.62 5.46 4.73L5.82 21z" />
-                </svg>
-                <svg *ngIf="m.label === 'Current Streak'" class="h-5 w-5 text-blue-600" viewBox="0 0 24 24"
-                    fill="currentColor">
-                    <path d="M13 3s-2 2-2 5 2 4 2 6-2 4-2 4 7-3 7-8-5-7-5-7z" />
-                    <path d="M6 13c-1.5 1-3 2.5-3 4.5S5 22 8 22s6-1.5 6-4.5" />
-                </svg>
-                <svg *ngIf="m.label === 'Time Invested'" class="h-5 w-5 text-blue-600" viewBox="0 0 24 24"
-                    fill="currentColor">
-                    <path d="M12 8v5l4 2" />
-                    <path d="M21 12A9 9 0 1 1 12 3a9 9 0 0 1 9 9z" />
-                </svg>
-            </div>
-            <div class="mt-2 text-2xl font-semibold text-gray-900">{{ m.value }}</div>
-            <div class="mt-1 text-xs">
-                <span [ngClass]="deltaColor(m.delta)" class="font-medium">
-                    {{ deltaPrefix(m.delta) }}{{ m.delta.value }}%
-                </span>
-            </div>
-        </div>
-    </div>
+  <!-- Course history + module-level progress -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <app-course-history-list
+      [courses]="summary?.enrolled_courses || []"
+      [staticDefinitions]="staticCourses"
+      [selectedCourseId]="selectedCourseId"
+      [loading]="courseHistoryLoading"
+      [error]="courseHistoryError"
+      (courseSelected)="onCourseSelected($event)"
+    ></app-course-history-list>
 
-    <!-- CHARTS ROW -->
-    <div class="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <!-- Radar -->
-        <div class="rounded-xl border border-gray-200 bg-white p-4">
-            <div class="mb-3 font-semibold text-gray-900">Score by Category</div>
-            <svg [attr.width]="radarSize" [attr.height]="radarSize" class="mx-auto block">
-                <!-- grid rings -->
-                <polygon *ngFor="let g of radarRings" [attr.points]="radarGrid(g)" class="fill-none" stroke="#E5E7EB"
-                    stroke-width="1"></polygon>
+    <app-module-progress-card
+      [modules]="selectedCourseId ? modulesByCourse[selectedCourseId] || [] : []"
+      [staticCourse]="selectedStaticCourse"
+      [loading]="modulesLoading && !!selectedCourseId"
+    ></app-module-progress-card>
+  </div>
 
-                <!-- axes -->
-                <line *ngFor="let c of radar.categories; index as i" [attr.x1]="radarSize/2" [attr.y1]="radarSize/2"
-                    [attr.x2]="radarAxis(i).x2" [attr.y2]="radarAxis(i).y2" stroke="#E5E7EB" stroke-width="1"></line>
+  <!-- Badges + certificates -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <app-badge-display
+      [badges]="badges"
+      [loading]="badgesLoading"
+    ></app-badge-display>
 
-                <!-- polygon -->
-                <polygon [attr.points]="radarPolygon(radar.values)" fill="rgba(59,130,246,0.18)" stroke="#3B82F6"
-                    stroke-width="2"></polygon>
-
-                <!-- labels -->
-                <g *ngFor="let c of radar.categories; index as i">
-                    <text [attr.x]="radarLabel(i).x" [attr.y]="radarLabel(i).y"
-                        [attr.text-anchor]="radarLabel(i).anchor" class="text-[12px] fill-gray-600 select-none">{{ c
-                        }}</text>
-                </g>
-            </svg>
-        </div>
-
-        <!-- Weekly Activity -->
-        <div class="rounded-xl border border-gray-200 bg-white p-4">
-            <div class="mb-3 font-semibold text-gray-900">Weekly Activity</div>
-            <svg [attr.width]="lineW" [attr.height]="lineH" class="block">
-                <!-- axes -->
-                <rect [attr.x]="linePad" [attr.y]="linePad" [attr.width]="lineW - linePad*2"
-                    [attr.height]="lineH - linePad*2" fill="none" stroke="#E5E7EB" stroke-width="1" rx="6"></rect>
-
-                <!-- prompts line -->
-                <path [attr.d]="linePath(weekly.prompts, weekly.maxPrompts)" fill="none" stroke="#3B82F6"
-                    stroke-width="2"></path>
-
-                <!-- score line -->
-                <path [attr.d]="linePath(weekly.score, weekly.maxScore)" fill="none" stroke="#8B5CF6" stroke-width="2"
-                    stroke-dasharray="4 3"></path>
-
-                <!-- x labels -->
-                <g *ngFor="let d of weekly.days; index as i">
-                    <text [attr.x]="xTick(i)" [attr.y]="lineH - 4" text-anchor="middle"
-                        class="text-[11px] fill-gray-500 select-none">{{ d }}</text>
-                </g>
-
-                <!-- legend -->
-                <g>
-                    <circle cx="16" cy="16" r="4" fill="#3B82F6"></circle>
-                    <text x="26" y="19" class="text-[11px] fill-gray-600">prompts</text>
-                    <circle cx="86" cy="16" r="4" fill="#8B5CF6"></circle>
-                    <text x="96" y="19" class="text-[11px] fill-gray-600">score</text>
-                </g>
-            </svg>
-        </div>
-    </div>
-
-    <!-- ACHIEVEMENTS -->
-    <div class="mt-5 rounded-xl border border-gray-200 bg-white p-4">
-        <div class="mb-3 font-semibold text-gray-900">Recent Achievements</div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div *ngFor="let a of achievements" class="flex items-center gap-3 rounded-lg border border-gray-200 p-3">
-                <!-- icon -->
-                <div class="h-8 w-8 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center">
-                    <ng-container [ngSwitch]="a.icon">
-                        <svg *ngSwitchCase="'trophy'" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M18 2H6v2H3v3a5 5 0 0 0 5 5 5 5 0 0 0 4 0 5 5 0 0 0 5-5V4h-3V2zM8 22h8v-2H8z" />
-                            <path d="M8 17h8v2H8z" />
-                        </svg>
-                        <svg *ngSwitchCase="'bolt'" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M11 21h-1l1-7H7l6-11h1l-1 7h4z" />
-                        </svg>
-                        <svg *ngSwitchCase="'medal'" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 12a5 5 0 1 0 5 5 5 5 0 0 0-5-5z" />
-                            <path d="M7 2h10l-2 5H9z" />
-                        </svg>
-                        <svg *ngSwitchCase="'target'" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 20a8 8 0 1 1 8-8" />
-                            <circle cx="12" cy="12" r="3" />
-                        </svg>
-                        <svg *ngSwitchDefault class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5z" />
-                        </svg>
-                    </ng-container>
-                </div>
-                <div class="flex-1">
-                    <div class="text-sm font-medium text-gray-900">{{ a.title }}</div>
-                    <div class="text-xs text-gray-500">{{ a.date }}</div>
-                    <div class="mt-1 h-1.5 w-full rounded-full bg-gray-200 overflow-hidden">
-                        <div class="h-1.5 bg-blue-600 rounded-full" [style.width.%]="a.progressPct || 0"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MOST USED & TOP PERFORMERS -->
-    <div class="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <!-- Most Used Templates -->
-        <div class="rounded-xl border border-gray-200 bg-white p-4">
-            <div class="mb-3 font-semibold text-gray-900">Most Used Templates</div>
-            <div class="space-y-2">
-                <div *ngFor="let t of usedTemplates" class="grid grid-cols-12 items-center gap-2">
-                    <div class="col-span-4 text-sm text-gray-600 truncate">{{ t.name }}</div>
-                    <div class="col-span-7 h-2 rounded-full bg-gray-200 overflow-hidden">
-                        <div class="h-2 rounded-full bg-blue-600" [style.width]="widthPct(t.used)"></div>
-                    </div>
-                    <div class="col-span-1 text-right text-sm tabular-nums text-gray-700">{{ t.used }}</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Top Performers -->
-        <div class="rounded-xl border border-gray-200 bg-white p-4">
-            <div class="mb-3 font-semibold text-gray-900">Top Performers This Week</div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm">
-                    <thead class="text-left text-gray-500">
-                        <tr>
-                            <th class="py-2 pr-4">Rank</th>
-                            <th class="py-2 pr-4">User</th>
-                            <th class="py-2 pr-4">Score</th>
-                            <th class="py-2 pr-4">Progress</th>
-                            <th class="py-2">Change</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-gray-800">
-                        <tr *ngFor="let p of performers" class="border-t border-gray-100">
-                            <td class="py-2 pr-4 font-medium">#{{ p.rank }}</td>
-                            <td class="py-2 pr-4 flex items-center gap-2">
-                                <span
-                                    class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-[11px] font-semibold">
-                                    {{ initials(p.name) }}
-                                </span>
-                                {{ p.name }}
-                            </td>
-                            <td class="py-2 pr-4 tabular-nums">{{ p.score }}</td>
-                            <td class="py-2 pr-4">
-                                <div class="h-2 w-40 bg-gray-200 rounded-full overflow-hidden">
-                                    <div class="h-2 bg-blue-600 rounded-full" [style.width.%]="p.progressPct"></div>
-                                </div>
-                            </td>
-                            <td class="py-2">
-                                <span [ngClass]="{
-                    'text-emerald-600': p.change > 0,
-                    'text-red-600': p.change < 0,
-                    'text-gray-500': p.change === 0
-                  }" class="tabular-nums">
-                                    {{ p.change > 0 ? '+' + p.change : p.change }}
-                                </span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
+    <app-certificate-viewer
+      [certificates]="certificates"
+      [loading]="certificatesLoading"
+    ></app-certificate-viewer>
+  </div>
 </div>

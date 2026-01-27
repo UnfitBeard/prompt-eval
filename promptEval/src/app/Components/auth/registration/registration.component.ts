@@ -9,8 +9,9 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { Router, RouteReuseStrategy, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../Service/auth.service';
+import { UserRole } from '../../../models/course.model';
 
 function matchPassword(group: AbstractControl): ValidationErrors | null {
   const pass = group.get('password')?.value ?? '';
@@ -27,10 +28,12 @@ function matchPassword(group: AbstractControl): ValidationErrors | null {
 export class RegistrationComponent {
   form: FormGroup;
   show = { password: false, confirm: false };
+  isAdminRegistration = false;
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
+    private route: ActivatedRoute,
     private authService: AuthService
   ) {
     this.form = this.fb.group(
@@ -51,6 +54,9 @@ export class RegistrationComponent {
       },
       { validators: matchPassword }
     );
+
+    this.isAdminRegistration =
+      this.route.snapshot.data?.['adminRegistration'] === true;
   }
 
   // -------- Password strength (0..100) + label/color ----------
@@ -106,10 +112,31 @@ export class RegistrationComponent {
       return;
     }
     const payload = this.form.getRawValue();
-    console.log('REGISTER →', payload);
+    console.log('REGISTER ', payload);
+
+    // If we're on the admin registration route, use the admin-only endpoint.
+    if (this.isAdminRegistration) {
+      this.authService.registerAdmin(payload).subscribe({
+        next: () => {
+          // Keep the current admin signed in; just redirect back to admin dashboard.
+          this.router.navigate(['admin/admin-dashboard']);
+        },
+        error: (err) => {
+          console.error(err);
+        },
+      });
+      return;
+    }
 
     this.authService.register(payload).subscribe({
-      next: () => this.router.navigate(['dashboard']),
+      next: (token) => {
+        const role = token?.user?.role;
+        if (role === UserRole.ADMIN) {
+          this.router.navigate(['admin/admin-dashboard']);
+        } else {
+          this.router.navigate(['dashboard']);
+        }
+      },
       error: (err) => {
         console.error(err);
       },

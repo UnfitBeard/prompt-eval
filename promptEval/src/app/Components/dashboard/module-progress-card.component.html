@@ -1,0 +1,65 @@
+<div class="rounded-xl border border-gray-200 bg-white p-4 h-full flex flex-col">
+  <div class="mb-3 flex items-center justify-between">
+    <h2 class="font-semibold text-gray-900">Module Progress</h2>
+    <span class="text-xs text-gray-500" *ngIf="modules?.length">{{ modules.length }} modules</span>
+  </div>
+
+  <ng-container *ngIf="loading; else contentTpl">
+    <div class="flex-1 flex items-center justify-center text-sm text-gray-500">
+      Loading modules...
+    </div>
+  </ng-container>
+
+  <ng-template #contentTpl>
+    <ng-container *ngIf="modules?.length; else noModulesTpl">
+      <div class="space-y-2 overflow-y-auto max-h-80 pr-1">
+        <div
+          *ngFor="let m of modules"
+          class="rounded-lg border border-gray-200 px-3 py-2 flex items-start justify-between"
+        >
+          <div class="flex-1 pr-3">
+            <div class="text-sm font-medium text-gray-900">
+              <span class="text-xs text-gray-500 mr-1">#{{ m.order + 1 }}</span>
+              {{ getStaticModule(m.module_id)?.title || m.title }}
+            </div>
+            <div class="text-xs text-gray-500" *ngIf="getStaticModule(m.module_id) as sm">
+              {{ sm.description }}
+            </div>
+            <div class="mt-1 h-1.5 rounded-full bg-gray-200 overflow-hidden">
+              <div
+                class="h-1.5 rounded-full"
+                [ngClass]="{
+                  'bg-emerald-500': m.status === 'completed',
+                  'bg-blue-500': m.status === 'in_progress',
+                  'bg-gray-400': m.status === 'not_started'
+                }"
+                [style.width.%]="m.score_percentage || (m.status === 'completed' ? 100 : 0)"
+              ></div>
+            </div>
+          </div>
+          <div class="text-right text-xs text-gray-600 min-w-[80px]">
+            <div>
+              XP {{ m.xp_earned }}/{{ m.max_xp }}
+            </div>
+            <div *ngIf="m.score_percentage != null">
+              Score {{ m.score_percentage | number: '1.0-0' }}%
+            </div>
+            <div class="mt-1 text-[11px]" [ngClass]="{
+              'text-emerald-600': m.status === 'completed',
+              'text-blue-600': m.status === 'in_progress',
+              'text-gray-500': m.status === 'not_started'
+            }">
+              {{ m.status === 'completed' ? 'Completed' : m.status === 'in_progress' ? 'In progress' : 'Not started' }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </ng-template>
+
+  <ng-template #noModulesTpl>
+    <div class="flex-1 flex items-center justify-center text-sm text-gray-500">
+      Select a course from the left to see its module progress.
+    </div>
+  </ng-template>
+</div>

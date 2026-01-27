@@ -1,9 +1,0 @@
-flask
-flask-cors
-fastembed
-onnxruntime
-protobuf
-scikit-learn
-joblib
-numpy
-gunicorn

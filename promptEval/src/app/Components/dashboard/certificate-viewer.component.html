@@ -1,0 +1,42 @@
+<div class="rounded-xl border border-gray-200 bg-white p-4 h-full flex flex-col">
+  <div class="mb-3 flex items-center justify-between">
+    <h2 class="font-semibold text-gray-900">Certificates</h2>
+    <span class="text-xs text-gray-500" *ngIf="certificates?.length">{{ certificates.length }} total</span>
+  </div>
+
+  <ng-container *ngIf="loading; else contentTpl">
+    <div class="flex-1 flex items-center justify-center text-sm text-gray-500">
+      Loading certificates...
+    </div>
+  </ng-container>
+
+  <ng-template #contentTpl>
+    <ng-container *ngIf="certificates?.length; else emptyTpl">
+      <div class="space-y-2 text-sm overflow-y-auto max-h-64 pr-1">
+        <div
+          *ngFor="let c of certificates"
+          class="rounded-lg border border-gray-200 px-3 py-2 flex items-center justify-between"
+        >
+          <div>
+            <div class="font-medium text-gray-900">{{ c.title }}</div>
+            <div class="text-xs text-gray-500">Issued {{ c.issued_at | date: 'mediumDate' }}</div>
+          </div>
+          <a
+            class="text-xs font-medium text-blue-600 hover:text-blue-800"
+            [href]="c.download_url"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            View / Download
+          </a>
+        </div>
+      </div>
+    </ng-container>
+  </ng-template>
+
+  <ng-template #emptyTpl>
+    <div class="flex-1 flex items-center justify-center text-sm text-gray-500">
+      No certificates yet. Complete a course to earn your first certificate.
+    </div>
+  </ng-template>
+</div>

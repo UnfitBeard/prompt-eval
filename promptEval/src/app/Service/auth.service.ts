@@ -70,6 +70,49 @@ export class AuthService {
     );
   }
 
+  /** Create a new admin user (admin-only endpoint on the backend). */
+  registerAdmin(form: RegistrationFormValue): Observable<User> {
+    const username =
+      form.username?.trim() ||
+      this.deriveUsernameFromEmailOrName(form.email, form.fullName);
+
+    const userData = {
+      username,
+      email: form.email,
+      password: form.password,
+      full_name: form.fullName,
+    };
+
+    // Backend route is protected with require_role('admin');
+    // this call will fail with 403 if the current user is not an admin.
+    return this.apiService.post<User>('/auth/admin/register', userData, true);
+  }
+
+  /** Returns whether the backend will allow creating the first admin (no admins exist yet). */
+  getAdminBootstrapStatus(): Observable<{ enabled: boolean }> {
+    return this.apiService.get<{ enabled: boolean }>(
+      '/auth/admin/bootstrap',
+      undefined,
+      false
+    );
+  }
+
+  /** Create the first admin user (only allowed when no admins exist yet). */
+  bootstrapAdmin(form: RegistrationFormValue): Observable<User> {
+    const username =
+      form.username?.trim() ||
+      this.deriveUsernameFromEmailOrName(form.email, form.fullName);
+
+    const userData = {
+      username,
+      email: form.email,
+      password: form.password,
+      full_name: form.fullName,
+    };
+
+    return this.apiService.post<User>('/auth/admin/bootstrap', userData, false);
+  }
+
   /** Login using the login form's shape ({ email, password }). */
   login(form: LoginFormValue): Observable<TokenResponse> {
     // Many backends (e.g. FastAPI OAuth2PasswordRequestForm) require the field name `username`.
@@ -222,4 +265,9 @@ export class AuthService {
   isAdmin(): boolean {
     return this.hasRole(UserRole.ADMIN);
   }
+
+  isUser(): boolean {
+    return this.hasRole(UserRole.STUDENT);
+  }
+
 }

@@ -1,0 +1,70 @@
+<div class="rounded-xl border border-gray-200 bg-white p-4 h-full flex flex-col">
+  <div class="mb-3 flex items-center justify-between">
+    <h2 class="font-semibold text-gray-900">Course History</h2>
+    <span class="text-xs text-gray-500" *ngIf="courses?.length">{{ courses.length }} enrolled</span>
+  </div>
+
+  <ng-container *ngIf="error; else listOrLoading">
+    <div class="text-sm text-red-600">
+      Failed to load courses: {{ error }}
+    </div>
+  </ng-container>
+
+  <ng-template #listOrLoading>
+    <ng-container *ngIf="!loading; else loadingTpl">
+      <div *ngIf="courses?.length; else emptyTpl" class="space-y-2 overflow-y-auto max-h-80 pr-1">
+        <button
+          type="button"
+          *ngFor="let c of courses"
+          class="w-full rounded-lg border px-3 py-2 text-left transition hover:border-blue-400 hover:bg-blue-50/40"
+          [ngClass]="{
+            'border-blue-500 bg-blue-50': selectedCourseId === c.course_id,
+            'border-gray-200': selectedCourseId !== c.course_id
+          }"
+          (click)="onSelectCourse(c.course_id)"
+        >
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-sm font-medium text-gray-900">{{ c.course_title }}</div>
+              <div class="text-xs text-gray-500">
+                {{ getStatus(c) }}
+                <ng-container *ngIf="getStaticCourse(c.course_id) as staticCourse">
+                  • ~{{ staticCourse.estimatedHours }} hrs
+                </ng-container>
+              </div>
+            </div>
+            <div class="text-xs text-gray-600 text-right">
+              <div class="font-semibold">{{ c.progress_percentage | number: '1.0-0' }}%</div>
+              <div class="text-[11px]">
+                {{ c.completed_lessons }}/{{ c.total_lessons }} lessons
+              </div>
+            </div>
+          </div>
+          <div class="mt-2 h-1.5 rounded-full bg-gray-200 overflow-hidden">
+            <div
+              class="h-1.5 rounded-full"
+              [ngClass]="{
+                'bg-emerald-500': c.progress_percentage >= 100,
+                'bg-blue-500': c.progress_percentage > 0 && c.progress_percentage < 100,
+                'bg-gray-400': c.progress_percentage === 0
+              }"
+              [style.width.%]="c.progress_percentage"
+            ></div>
+          </div>
+        </button>
+      </div>
+    </ng-container>
+  </ng-template>
+
+  <ng-template #loadingTpl>
+    <div class="flex-1 flex items-center justify-center text-sm text-gray-500">
+      Loading course history...
+    </div>
+  </ng-template>
+
+  <ng-template #emptyTpl>
+    <div class="flex-1 flex items-center justify-center text-sm text-gray-500">
+      No enrolled courses yet. Enroll in a course to start tracking your progress.
+    </div>
+  </ng-template>
+</div>

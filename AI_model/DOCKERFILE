@@ -1,9 +1,0 @@
-FROM python:3.12-slim
-WORKDIR /app
-RUN pip install --no-cache-dir --upgrade pip
-COPY AI_model/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY AI_model/scoring_artifacts ./scoring_artifacts
-ENV ART_DIR=/app/scoring_artifacts
-EXPOSE 5000
-CMD ["python", "infer_ridge.py"]

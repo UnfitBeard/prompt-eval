@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordBearer
 import logging
 
 from config import settings
-from models.user import UserInDB
+from models.user import UserInDB, UserRole
 from core.password import verify_password, get_password_hash
 
 logger = logging.getLogger(__name__)
@@ -112,14 +112,24 @@ async def get_current_active_user(
 
 
 def require_role(required_role: str):
-    """Dependency to require specific user role"""
+    """Dependency to require specific user role.
+
+    Admin users are always allowed, otherwise the user's role must
+    match the required role.
+    """
+
     async def role_checker(
         current_user: UserInDB = Depends(get_current_active_user)
     ) -> UserInDB:
-        if current_user.role != required_role and current_user.role != "admin":
+        # Normalize role values in case they are enums
+        user_role = getattr(current_user.role, "value", current_user.role)
+        admin_value = getattr(UserRole.ADMIN, "value", "admin")
+
+        if user_role != required_role and user_role != admin_value:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Requires {required_role} role"
+                detail=f"Requires {required_role} role",
             )
         return current_user
+
     return role_checker
