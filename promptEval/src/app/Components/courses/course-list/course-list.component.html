@@ -157,12 +157,47 @@
                             {{ getDifficultyLabel(course.difficulty) }}
                         </span>
                     </div>
-                    <h2 class="text-2xl font-semibold text-gray-900">
-                        {{ course.subtitle }}
-                    </h2>
-                    <p class="text-sm text-gray-600">
-                        {{ course.audience }}
-                    </p>
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <h2 class="text-2xl font-semibold text-gray-900">
+                                {{ course.subtitle }}
+                            </h2>
+                            <p class="text-sm text-gray-600 mt-2">
+                                {{ course.audience }}
+                            </p>
+                        </div>
+                        
+                        <!-- Start Course Button -->
+                        <button *ngIf="!isCourseStarted(course.id)" 
+                                type="button"
+                                (click)="startCourse(course)"
+                                class="flex-shrink-0 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold text-sm shadow-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5">
+                            <i class="fas fa-play"></i>
+                            Start Course
+                        </button>
+                        
+                        <!-- Course Started Indicator -->
+                        <div *ngIf="isCourseStarted(course.id)" 
+                             class="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 border border-emerald-200">
+                            <i class="fas fa-check-circle text-emerald-600"></i>
+                            <span class="text-sm font-medium text-emerald-700">Started</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bar (only shown if course is started) -->
+                    <div *ngIf="isCourseStarted(course.id)" class="space-y-2">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-600 font-medium">Course Progress</span>
+                            <span class="text-gray-900 font-semibold">{{ getCourseProgress(course.id) }}%</span>
+                        </div>
+                        <div class="relative w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+                            <div class="absolute inset-y-0 left-0 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full transition-all duration-500"
+                                 [style.width.%]="getCourseProgress(course.id)"></div>
+                        </div>
+                        <p class="text-xs text-gray-500">
+                            Keep completing modules to reach 100%
+                        </p>
+                    </div>
 
                     <div>
                         <h3 class="text-sm font-semibold text-gray-900 mb-2">

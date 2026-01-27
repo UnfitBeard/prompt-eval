@@ -2,7 +2,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AdminService, SystemPerformance, SystemUsage } from '../../../Service/admin.service';
+import { AdminService, SystemPerformance, SystemUsage, ApiError, ApiErrorStats } from '../../../Service/admin.service';
+import { NotificationService } from '../../../Services/notification.service';
 
 @Component({
   selector: 'app-admin-monitoring',
@@ -12,22 +13,34 @@ import { AdminService, SystemPerformance, SystemUsage } from '../../../Service/a
 })
 export class AdminMonitoringComponent implements OnInit {
   private adminService = inject(AdminService);
+  private notificationService = inject(NotificationService);
   
   loading = true;
   error: string | null = null;
   performance: SystemPerformance | null = null;
   usage: SystemUsage | null = null;
   selectedDays = 30;
+  
+  // API Errors
+  apiErrors: ApiError[] = [];
+  errorStats: ApiErrorStats | null = null;
+  showResolvedErrors = false;
+  loadingErrors = false;
 
   ngOnInit() {
     this.loadData();
     // Refresh every 30 seconds
-    setInterval(() => this.loadPerformance(), 30000);
+    setInterval(() => {
+      this.loadPerformance();
+      this.loadApiErrors();
+    }, 30000);
   }
 
   loadData() {
     this.loadPerformance();
     this.loadUsage();
+    this.loadApiErrors();
+    this.loadErrorStats();
   }
 
   loadPerformance() {
@@ -85,6 +98,79 @@ export class AdminMonitoringComponent implements OnInit {
 
   getDayTitle(dayCount: number, date: string): string {
     return `${dayCount} evaluations on ${date}`;
+  }
+
+  loadApiErrors() {
+    this.loadingErrors = true;
+    this.adminService.getApiErrors(50, this.showResolvedErrors ? undefined : false).subscribe({
+      next: (response) => {
+        this.apiErrors = response.errors;
+        this.loadingErrors = false;
+        
+        // Show notification for critical errors
+        const unresolvedCritical = this.apiErrors.filter(
+          e => !e.resolved && e.error_type.includes('QUOTA')
+        );
+        if (unresolvedCritical.length > 0) {
+          this.notificationService.error(
+            'Critical API Errors',
+            `${unresolvedCritical.length} unresolved Gemini API quota errors detected!`,
+            0 // Persistent
+          );
+        }
+      },
+      error: (err) => {
+        console.error('Error loading API errors:', err);
+        this.loadingErrors = false;
+      },
+    });
+  }
+
+  loadErrorStats() {
+    this.adminService.getApiErrorStats().subscribe({
+      next: (response) => {
+        this.errorStats = response.stats;
+      },
+      error: (err) => {
+        console.error('Error loading error stats:', err);
+      },
+    });
+  }
+
+  resolveError(errorId: string) {
+    this.adminService.resolveApiError(errorId).subscribe({
+      next: () => {
+        this.notificationService.success('Success', 'Error marked as resolved');
+        this.loadApiErrors();
+        this.loadErrorStats();
+      },
+      error: (err) => {
+        const error = this.notificationService.parseHttpError(err);
+        this.notificationService.error(error.title, error.message);
+      },
+    });
+  }
+
+  toggleShowResolved() {
+    this.showResolvedErrors = !this.showResolvedErrors;
+    this.loadApiErrors();
+  }
+
+  getErrorSeverity(errorType: string): 'critical' | 'warning' | 'info' {
+    if (errorType.includes('QUOTA') || errorType.includes('EXHAUSTED')) {
+      return 'critical';
+    }
+    if (errorType.includes('TIMEOUT') || errorType.includes('RATE_LIMIT')) {
+      return 'warning';
+    }
+    return 'info';
+  }
+
+  getErrorBadgeClass(errorType: string): string {
+    const severity = this.getErrorSeverity(errorType);
+    if (severity === 'critical') return 'bg-red-100 text-red-800';
+    if (severity === 'warning') return 'bg-yellow-100 text-yellow-800';
+    return 'bg-blue-100 text-blue-800';
   }
 }
 

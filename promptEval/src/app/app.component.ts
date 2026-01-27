@@ -4,10 +4,11 @@ import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from "@angular/ro
 import { filter } from "rxjs";
 import { FooterComponent } from "./Components/footer/footer.component";
 import { NavbarComponent, NavItem } from "./Components/navbar/navbar.component";
+import { NotificationToastComponent } from "./Components/notification-toast/notification-toast.component";
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, NavbarComponent, FooterComponent, CommonModule],
+  imports: [RouterOutlet, NavbarComponent, FooterComponent, CommonModule, NotificationToastComponent],
   standalone: true,
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
@@ -122,7 +123,7 @@ export class AppComponent {
 
         const data = r?.snapshot.data ?? {};
         this.showNavbar.set(data['hideNavbar'] !== true);
-        this.showFooter.set(data['hideFooter'] === true);
+        this.showFooter.set(data['hideFooter'] !== true);  // Fixed: show footer when hideFooter is NOT true
       });
   }
 }

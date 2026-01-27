@@ -63,7 +63,7 @@ SCORE_THRESHOLD = 6.0  # Below this, we suggest improvements
 MIN_IMPROVEMENT_DELTA = 1.0  # Minimum score improvement to show alternative
 
 # ======================
-# DATABASE SETUP (SQLite for history)
+# DATABASE SETUP (SQLite for history + errors)
 # ======================
 
 
@@ -81,11 +81,42 @@ def init_db():
                   improved_prompt TEXT,
                   improved_scores TEXT,
                   trace_id TEXT)''')
+    
+    # Table for API errors
+    c.execute('''CREATE TABLE IF NOT EXISTS api_errors
+                 (id TEXT PRIMARY KEY,
+                  timestamp DATETIME,
+                  error_type TEXT,
+                  error_message TEXT,
+                  error_details TEXT,
+                  endpoint TEXT,
+                  resolved BOOLEAN DEFAULT 0)''')
     conn.commit()
     conn.close()
 
 
 init_db()
+
+# ======================
+# ERROR LOGGING
+# ======================
+
+def log_api_error(error_type: str, error_message: str, error_details: dict, endpoint: str = "unknown"):
+    """Log API errors to database for admin monitoring"""
+    try:
+        conn = sqlite3.connect('prompt_history.db')
+        c = conn.cursor()
+        error_id = str(uuid.uuid4())
+        c.execute('''INSERT INTO api_errors 
+                     (id, timestamp, error_type, error_message, error_details, endpoint, resolved)
+                     VALUES (?, ?, ?, ?, ?, ?, ?)''',
+                  (error_id, datetime.now().isoformat(), error_type, error_message,
+                   json.dumps(error_details), endpoint, False))
+        conn.commit()
+        conn.close()
+        logger.warning(f"Logged API error: {error_type} - {error_message}")
+    except Exception as e:
+        logger.error(f"Failed to log API error: {e}")
 
 # ======================
 # FASTAPI APP
@@ -331,20 +362,28 @@ async def generate_suggestions_fast(prompt: str, scores: Dict, similar_prompts: 
     ]
 
     system_msg = SystemMessage(content="""You are a prompt optimization assistant. 
-Return ONLY a JSON array of 1-3 specific, actionable suggestions to improve the prompt.
-Format: ["suggestion 1", "suggestion 2", "suggestion 3"]""")
+Return ONLY a JSON array of 3-5 specific, actionable suggestions to improve the prompt.
+Each suggestion MUST start with one of these dimension prefixes:
+- "Clarity: " - for issues with understanding or ambiguity
+- "Context: " - for missing background or domain information
+- "Relevance: " - for off-topic or unnecessary content
+- "Specificity: " - for vague or general statements that need more detail
+- "Creativity: " - for opportunities to make the prompt more innovative
+
+Format: ["Clarity: suggestion text", "Context: suggestion text", "Specificity: suggestion text"]
+Always include at least one suggestion for each low-scoring dimension.""")
 
     user_msg = HumanMessage(content=f"""Prompt: {prompt}
 
 Current scores (1-10):
 {json.dumps(scores, indent=2)}
 
-Low dimensions: {', '.join(low_dimensions) if low_dimensions else 'None'}
+Dimensions needing improvement (score < {SCORE_THRESHOLD}): {', '.join(low_dimensions) if low_dimensions else 'All dimensions are good'}
 
 Similar high-quality prompts:
 {context}
 
-Provide 1-3 specific suggestions:""")
+Provide 3-5 specific suggestions with dimension prefixes:""")
 
     try:
         resp = await asyncio.wait_for(
@@ -360,10 +399,27 @@ Provide 1-3 specific suggestions:""")
             return json.loads(extract_json_inside_codeblock(content))
         else:
             # Fallback: generate based on low dimensions
-            return [f"Improve {dim}: Add more specific details" for dim in low_dimensions[:3]]
+            fallback_map = {
+                'clarity': 'Clarity: Make the prompt more clear and unambiguous',
+                'context': 'Context: Add relevant background information and domain context',
+                'relevance': 'Relevance: Focus on the core objective and remove unnecessary details',
+                'specificity': 'Specificity: Add concrete examples and specific requirements',
+                'creativity': 'Creativity: Consider more innovative approaches or alternatives'
+            }
+            return [fallback_map.get(dim, f"{dim.title()}: Improve this dimension") for dim in low_dimensions[:5]]
 
     except Exception as e:
+        error_msg = str(e)
         logger.error(f"Fast suggestions failed: {e}")
+        
+        # Check if it's a Gemini API quota/rate limit error
+        if 'RESOURCE_EXHAUSTED' in error_msg or 'quota' in error_msg.lower() or '429' in error_msg:
+            log_api_error(
+                error_type="GEMINI_QUOTA_EXCEEDED",
+                error_message="Gemini API quota or rate limit exceeded",
+                error_details={"error": error_msg, "model": "gemini-2.5-flash-lite"},
+                endpoint="/evaluate (generate_suggestions_fast)"
+            )
         return []
 
 
@@ -568,6 +624,100 @@ async def health():
         },
         "version": "1.0.0"
     }
+
+# Admin endpoint to get API errors
+@app.get("/api/v1/admin/errors")
+async def get_api_errors(limit: int = 50, resolved: bool = None):
+    """Get API errors for admin monitoring"""
+    try:
+        conn = sqlite3.connect('prompt_history.db')
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        
+        if resolved is not None:
+            c.execute('''SELECT * FROM api_errors 
+                         WHERE resolved = ?
+                         ORDER BY timestamp DESC LIMIT ?''', (resolved, limit))
+        else:
+            c.execute('''SELECT * FROM api_errors 
+                         ORDER BY timestamp DESC LIMIT ?''', (limit,))
+        
+        rows = c.fetchall()
+        conn.close()
+        
+        errors = []
+        for row in rows:
+            error_dict = dict(row)
+            error_dict['error_details'] = json.loads(error_dict['error_details'])
+            errors.append(error_dict)
+        
+        return {
+            "success": True,
+            "errors": errors,
+            "total": len(errors)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Admin endpoint to mark error as resolved
+@app.put("/api/v1/admin/errors/{error_id}/resolve")
+async def resolve_api_error(error_id: str):
+    """Mark an API error as resolved"""
+    try:
+        conn = sqlite3.connect('prompt_history.db')
+        c = conn.cursor()
+        c.execute('''UPDATE api_errors SET resolved = 1 WHERE id = ?''', (error_id,))
+        conn.commit()
+        conn.close()
+        
+        return {"success": True, "message": "Error marked as resolved"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Admin endpoint to get error statistics
+@app.get("/api/v1/admin/errors/stats")
+async def get_error_stats():
+    """Get API error statistics"""
+    try:
+        conn = sqlite3.connect('prompt_history.db')
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        
+        # Total errors
+        c.execute('SELECT COUNT(*) as total FROM api_errors')
+        total = c.fetchone()['total']
+        
+        # Unresolved errors
+        c.execute('SELECT COUNT(*) as unresolved FROM api_errors WHERE resolved = 0')
+        unresolved = c.fetchone()['unresolved']
+        
+        # Errors by type
+        c.execute('''SELECT error_type, COUNT(*) as count 
+                     FROM api_errors 
+                     GROUP BY error_type
+                     ORDER BY count DESC''')
+        by_type = [dict(row) for row in c.fetchall()]
+        
+        # Recent errors (last 24 hours)
+        c.execute('''SELECT COUNT(*) as recent 
+                     FROM api_errors 
+                     WHERE timestamp >= datetime('now', '-1 day')''')
+        recent_24h = c.fetchone()['recent']
+        
+        conn.close()
+        
+        return {
+            "success": True,
+            "stats": {
+                "total_errors": total,
+                "unresolved_errors": unresolved,
+                "resolved_errors": total - unresolved,
+                "errors_24h": recent_24h,
+                "by_type": by_type
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # ======================
 # CLEANUP ON SHUTDOWN

@@ -24,8 +24,14 @@
           (click)="onSelectCourse(c.course_id)"
         >
           <div class="flex items-center justify-between">
-            <div>
-              <div class="text-sm font-medium text-gray-900">{{ c.course_title }}</div>
+            <div class="flex-1">
+              <div class="flex items-center gap-2">
+                <div class="text-sm font-medium text-gray-900">{{ c.course_title }}</div>
+                <span *ngIf="isCourseStarted(c.course_id)" 
+                      class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 border border-emerald-200 text-emerald-700">
+                  <i class="fas fa-play text-[8px] mr-1"></i>Started
+                </span>
+              </div>
               <div class="text-xs text-gray-500">
                 {{ getStatus(c) }}
                 <ng-container *ngIf="getStaticCourse(c.course_id) as staticCourse">
@@ -34,7 +40,7 @@
               </div>
             </div>
             <div class="text-xs text-gray-600 text-right">
-              <div class="font-semibold">{{ c.progress_percentage | number: '1.0-0' }}%</div>
+              <div class="font-semibold">{{ getEffectiveProgress(c) | number: '1.0-0' }}%</div>
               <div class="text-[11px]">
                 {{ c.completed_lessons }}/{{ c.total_lessons }} lessons
               </div>
@@ -42,13 +48,13 @@
           </div>
           <div class="mt-2 h-1.5 rounded-full bg-gray-200 overflow-hidden">
             <div
-              class="h-1.5 rounded-full"
+              class="h-1.5 rounded-full transition-all duration-500"
               [ngClass]="{
-                'bg-emerald-500': c.progress_percentage >= 100,
-                'bg-blue-500': c.progress_percentage > 0 && c.progress_percentage < 100,
-                'bg-gray-400': c.progress_percentage === 0
+                'bg-gradient-to-r from-emerald-400 to-emerald-600': getEffectiveProgress(c) >= 100,
+                'bg-gradient-to-r from-indigo-500 to-purple-600': getEffectiveProgress(c) > 0 && getEffectiveProgress(c) < 100,
+                'bg-gray-400': getEffectiveProgress(c) === 0
               }"
-              [style.width.%]="c.progress_percentage"
+              [style.width.%]="getEffectiveProgress(c)"
             ></div>
           </div>
         </button>

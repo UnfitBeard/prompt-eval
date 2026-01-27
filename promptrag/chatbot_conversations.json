@@ -504,5 +504,71 @@
     "created_at": "2026-01-26T15:17:14.104912",
     "updated_at": "2026-01-26T15:17:16.638847",
     "title": "Am new to prompt engineering where do i start"
+  },
+  "327bd731-dbf9-488c-b58f-f793ca0926c6": {
+    "id": "327bd731-dbf9-488c-b58f-f793ca0926c6",
+    "messages": [
+      {
+        "role": "user",
+        "content": "hello",
+        "timestamp": "2026-01-27T21:07:21.295315"
+      },
+      {
+        "role": "assistant",
+        "content": "Greetings! What can I help you with today?",
+        "timestamp": "2026-01-27T21:07:23.480402"
+      },
+      {
+        "role": "user",
+        "content": "Can you give me a practical example?",
+        "timestamp": "2026-01-27T21:07:28.241678"
+      },
+      {
+        "role": "assistant",
+        "content": "Certainly! Let's explore a practical example of **chain-of-thought (CoT) prompting**, a technique that helps large language models (LLMs) break down complex problems into smaller, manageable steps.\n\nImagine you want an LLM to solve a word problem: \"If a baker made 15 cookies and then baked 12 more, how many cookies did the baker make in total?\" A standard prompt might just be the question itself. However, with CoT prompting, you would guide the model to show its reasoning. The prompt might look something like this:\n\n\"Q: A baker made 15 cookies. Then they baked 12 more. How many cookies did the baker make in total?\nA: The baker started with 15 cookies. They baked an additional 12 cookies. To find the total, we add these together: 15 + 12 = 27. The baker made a total of 27 cookies.\"\n\nBy including the step-by-step explanation in the prompt (as an \"exemplar\"), you're showing the LLM *how* to think through the problem. This encourages the model to generate its own intermediate steps when faced with a similar question, leading to more accurate and understandable answers.\n\nDoes this example make sense? We can also discuss other prompting techniques like **few-shot learning** or delve deeper into how CoT prompting enhances reasoning if you'd like!",
+        "timestamp": "2026-01-27T21:07:29.776636"
+      },
+      {
+        "role": "user",
+        "content": "hello",
+        "timestamp": "2026-01-27T21:25:51.373309"
+      },
+      {
+        "role": "assistant",
+        "content": "I apologize for the delay. Please try your question again.",
+        "timestamp": "2026-01-27T21:26:43.726614"
+      },
+      {
+        "role": "user",
+        "content": "hello",
+        "timestamp": "2026-01-27T21:36:24.512977"
+      },
+      {
+        "role": "assistant",
+        "content": "I apologize for the delay. Please try your question again.",
+        "timestamp": "2026-01-27T21:37:15.333259"
+      }
+    ],
+    "created_at": "2026-01-27T21:07:21.295304",
+    "updated_at": "2026-01-27T21:37:15.333279",
+    "title": "hello"
+  },
+  "89daeb67-e2b6-4b30-8daf-f30b1cd95415": {
+    "id": "89daeb67-e2b6-4b30-8daf-f30b1cd95415",
+    "messages": [
+      {
+        "role": "user",
+        "content": "hello",
+        "timestamp": "2026-01-27T21:38:05.329488"
+      },
+      {
+        "role": "assistant",
+        "content": "I apologize for the delay. Please try your question again.",
+        "timestamp": "2026-01-27T21:39:03.646065"
+      }
+    ],
+    "created_at": "2026-01-27T21:38:05.329476",
+    "updated_at": "2026-01-27T21:39:03.646109",
+    "title": "hello"
   }
 }

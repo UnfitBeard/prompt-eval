@@ -178,28 +178,61 @@ export class PromptEvaluatorV2Service {
       'creativity',
     ];
 
-    return dimensions.map((dimension) => {
-      const score =
-        scores.final_scores[dimension as keyof typeof scores.final_scores];
-      const dimensionKeywords = this.getDimensionKeywords(dimension);
+    // Map to store suggestions by dimension
+    const dimensionMap = new Map<string, string[]>();
+    const unmatchedSuggestions: string[] = [];
 
-      const relevantSuggestions = suggestions.filter((suggestion) =>
-        dimensionKeywords.some((keyword) =>
-          suggestion.toLowerCase().includes(keyword.toLowerCase())
-        )
-      );
-
-      return {
-        dimension: this.capitalizeFirst(dimension),
-        score,
-        suggestions:
-          relevantSuggestions.length > 0
-            ? relevantSuggestions
-            : [
-                `Consider improving ${dimension} by adding more specific details`,
-              ],
-      };
+    // Parse dimension prefix from each suggestion (e.g., "Clarity: ...")
+    suggestions.forEach((suggestion) => {
+      let matched = false;
+      
+      for (const dimension of dimensions) {
+        const prefix = this.capitalizeFirst(dimension) + ':';
+        if (suggestion.trim().startsWith(prefix)) {
+          // Remove the prefix and store just the suggestion text
+          const suggestionText = suggestion.substring(prefix.length).trim();
+          
+          if (!dimensionMap.has(dimension)) {
+            dimensionMap.set(dimension, []);
+          }
+          dimensionMap.get(dimension)!.push(suggestionText);
+          matched = true;
+          break;
+        }
+      }
+      
+      if (!matched) {
+        unmatchedSuggestions.push(suggestion);
+      }
     });
+
+    // Build the grouped array
+    const grouped: { dimension: string; score: number; suggestions: string[] }[] = [];
+
+    dimensions.forEach((dimension) => {
+      const suggestions = dimensionMap.get(dimension);
+      if (suggestions && suggestions.length > 0) {
+        const score = scores.final_scores[dimension as keyof typeof scores.final_scores];
+        grouped.push({
+          dimension: this.capitalizeFirst(dimension),
+          score,
+          suggestions,
+        });
+      }
+    });
+
+    // Add unmatched suggestions to a "General" category if any exist
+    if (unmatchedSuggestions.length > 0) {
+      const avgScore = Object.values(scores.final_scores).reduce((a, b) => a + b, 0) / Object.values(scores.final_scores).length;
+      
+      grouped.push({
+        dimension: 'General',
+        score: avgScore,
+        suggestions: unmatchedSuggestions,
+      });
+    }
+
+    return grouped;
   }
 
   /**

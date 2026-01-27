@@ -121,6 +121,24 @@ export interface MaintenanceInfo {
   log_files: string[];
 }
 
+export interface ApiError {
+  id: string;
+  timestamp: string;
+  error_type: string;
+  error_message: string;
+  error_details: any;
+  endpoint: string;
+  resolved: boolean;
+}
+
+export interface ApiErrorStats {
+  total_errors: number;
+  unresolved_errors: number;
+  resolved_errors: number;
+  errors_24h: number;
+  by_type: Array<{ error_type: string; count: number }>;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -173,6 +191,22 @@ export class AdminService {
       { days_to_keep: daysToKeep },
       true
     );
+  }
+
+  getApiErrors(limit: number = 50, resolved?: boolean): Observable<{ success: boolean; errors: ApiError[]; total: number }> {
+    const params: any = { limit };
+    if (resolved !== undefined) {
+      params.resolved = resolved;
+    }
+    return this.api.get<{ success: boolean; errors: ApiError[]; total: number }>('/admin/errors', params);
+  }
+
+  getApiErrorStats(): Observable<{ success: boolean; stats: ApiErrorStats }> {
+    return this.api.get<{ success: boolean; stats: ApiErrorStats }>('/admin/errors/stats');
+  }
+
+  resolveApiError(errorId: string): Observable<{ success: boolean; message: string }> {
+    return this.api.put<{ success: boolean; message: string }>(`/admin/errors/${errorId}/resolve`, {});
   }
 }
 

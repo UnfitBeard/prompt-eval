@@ -7,6 +7,7 @@ import {
   TemplatesService,
 } from '../../Services/templates.service';
 import { map } from 'rxjs';
+import { NotificationService } from '../../Services/notification.service';
 
 type TemplateCard = {
   title: string;
@@ -49,6 +50,7 @@ export class UserTemplatesComponent {
   constructor(
     private templateService: TemplatesService,
     private clipboard: Clipboard,
+    private notificationService: NotificationService
   ) {}
 
   get filteredCards(): TemplateCard[] {
@@ -85,6 +87,9 @@ export class UserTemplatesComponent {
   }
 
   copied = false;
+  selectedTemplate: TemplateCard | null = null;
+  showModal = false;
+
   private flashCopied() {
     this.copied = true;
     setTimeout(() => (this.copied = false), 2000);
@@ -94,10 +99,26 @@ export class UserTemplatesComponent {
     const text = `${title}\n\n${content}`;
     try {
       const ok = this.clipboard.copy(text);
-      if (ok) this.flashCopied();
+      if (ok) {
+        this.flashCopied();
+        this.notificationService.success('Copied!', 'Template copied to clipboard');
+      } else {
+        this.notificationService.error('Copy Failed', 'Failed to copy template to clipboard');
+      }
     } catch (err) {
       console.warn('clipboard copy failed', err);
+      this.notificationService.error('Copy Failed', 'Failed to copy template to clipboard');
     }
+  }
+
+  viewTemplate(template: TemplateCard) {
+    this.selectedTemplate = template;
+    this.showModal = true;
+  }
+
+  closeModal() {
+    this.showModal = false;
+    this.selectedTemplate = null;
   }
 
   ngOnInit() {
@@ -108,24 +129,33 @@ export class UserTemplatesComponent {
     this.templateService.getTemplatesList().subscribe({
       next: (resp: any) => {
         console.log('Templates response:', resp);
+        // Backend returns { success: boolean, data: Template[] }
+        // resp.data is already the array of templates
         this.cards = this.mapToTemplateCards(resp.data);
+        
+        if (this.cards.length === 0) {
+          this.notificationService.info('No Templates', 'No templates are currently available. Check back later!');
+        }
       },
       error: (err) => {
-        console.error(err);
+        console.error('Error fetching templates:', err);
+        const error = this.notificationService.parseHttpError(err);
+        this.notificationService.error(error.title, error.message);
       },
     });
   }
 
-  mapToTemplateCards(response: PromptsResponse): TemplateCard[] {
-    return response.templates.map((tpl: any) => ({
+  mapToTemplateCards(templates: any[]): TemplateCard[] {
+    // templates is already an array, not wrapped in PromptsResponse
+    return templates.map((tpl: any) => ({
       title: tpl.title ?? 'Untitled Template',
       description:
         tpl.description ?? 'No description available for this template.',
       domain: this.formatDomain(tpl.domain),
       content: tpl.content,
-      difficulty: tpl.difficulty as TemplateCard['difficulty'], // ✅ cast
-      rating: tpl.stats.avgScore || 0, // backend avgScore is 0..10, UI wants stars (0..5 or 0..10)
-      uses: tpl.stats.uses,
+      difficulty: tpl.difficulty as TemplateCard['difficulty'],
+      rating: tpl.stats?.avgScore || 0,
+      uses: tpl.stats?.uses || 0,
     }));
   }
 

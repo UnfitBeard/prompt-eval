@@ -70,6 +70,7 @@ __pycache__/
 *.pyo
 *.pyd
 *.pkl
+*.joblib
 *.sqlite3
 *.db
 *.egg-info/

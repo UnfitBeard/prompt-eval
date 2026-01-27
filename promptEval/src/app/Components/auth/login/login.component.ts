@@ -10,6 +10,7 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../Service/auth.service';
 import { UserRole } from '../../../models/course.model';
+import { NotificationService } from '../../../Services/notification.service';
 
 @Component({
   selector: 'app-login',
@@ -31,9 +32,13 @@ export class LoginComponent implements OnInit {
       next: (res) => {
         this.adminBootstrapEnabled = !!res?.enabled;
       },
-      error: () => {
+      error: (err) => {
         // If the check fails, simply hide the link.
         this.adminBootstrapEnabled = false;
+        if (err.status !== 404) {
+          const error = this.notificationService.parseHttpError(err);
+          this.notificationService.warning(error.title, error.message);
+        }
       },
     });
   }
@@ -41,7 +46,8 @@ export class LoginComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private notificationService: NotificationService
   ) {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -65,21 +71,26 @@ export class LoginComponent implements OnInit {
   get password() {
     return this.form.get('password');
   }
+
   onSubmit() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.notificationService.warning('Invalid Form', 'Please fill in all required fields correctly.');
       return;
     }
 
     this.errorMsg = '';
     this.loading = true;
     console.log('SIGN IN →', this.form.value);
-    // call auth service here
+
     this.authService
       .login({ email: this.email?.value, password: this.password?.value })
       .subscribe({
         next: (token) => {
+          this.loading = false;
           const role = token?.user?.role;
+          this.notificationService.success('Login Successful', `Welcome back, ${token?.user?.username || 'User'}!`);
+          
           if (role === UserRole.ADMIN) {
             this.router.navigate(['admin/admin-dashboard']);
           } else {
@@ -87,12 +98,22 @@ export class LoginComponent implements OnInit {
           }
         },
         error: (err) => {
-          this.errorMsg =
-            err?.error?.message ||
-            err?.error?.detail ||
-            err?.message ||
-            'Login failed. Please try again';
-          console.error(this.errorMsg);
+          this.loading = false;
+          const error = this.notificationService.parseHttpError(err);
+          
+          // Show specific error for wrong password
+          if (err.status === 401) {
+            this.notificationService.error(
+              'Login Failed',
+              'Invalid email or password. Please check your credentials and try again.'
+            );
+            this.errorMsg = 'Invalid email or password';
+          } else {
+            this.notificationService.error(error.title, error.message);
+            this.errorMsg = error.message;
+          }
+          
+          console.error('Login error:', err);
         },
       });
   }

@@ -1,42 +1,44 @@
-# Add these to your requirements.txt
-beautifulsoup4
-requests
-langchain-chroma
-langchain-google-genai
-langchain-huggingface
-langchain-core
-langchain
-genai
-langchain
-fastAPI
-tiktoken
-motor
-
-# Core
+# --- Core API & ASGI ---
 fastapi
 uvicorn[standard]
 
-# Database
+# --- LangChain & LLM Agents ---
+langchain
+langchain-core
+langchain-community
+langchain-chroma
+langchain-google-genai
+langchain-huggingface
+langchain-text-splitters
+tiktoken
+
+# --- Database ---
 motor
 pymongo
 
-# Authentication & Security
+# --- Authentication & Security ---
 python-jose[cryptography]
-# passlib's bcrypt handler is currently incompatible with bcrypt>=4 ("bcrypt" removed __about__),
-# so we use bcrypt directly.
+passlib
 bcrypt
 python-multipart
 
-# Environment & Config
+# --- Environment & Config ---
 pydantic
+pydantic[email]
 pydantic-settings
 python-dotenv
 
-# CORS
-fastapi-cors
-
-# Utils
+# --- Utils & Scrapers ---
 httpx
 requests
 beautifulsoup4
 psutil
+joblib
+
+# --- ML & Models ---
+sentence_transformers
+torch
+torchvision
+
+# --- Special Requirements ---
+--index-url https://download.pytorch.org/whl/cpu

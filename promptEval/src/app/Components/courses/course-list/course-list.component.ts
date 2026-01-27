@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { CourseService } from '../../../Service/course.service';
+import { StartedCoursesService } from '../../../Services/started-courses.service';
 
 type CourseDifficulty = 'beginner' | 'intermediate' | 'advanced';
 
@@ -151,10 +152,53 @@ const ADV_Q_SELF_CORRECT: ModuleQuestion = {
   styleUrls: ['./course-list.component.css'],
 })
 export class CourseListComponent implements OnInit {
-  constructor(private courseService: CourseService) {}
+  constructor(
+    private courseService: CourseService,
+    private startedCoursesService: StartedCoursesService
+  ) {}
 
   ngOnInit(): void {
     this.loadCourses();
+  }
+
+  isCourseStarted(courseId: string): boolean {
+    return this.startedCoursesService.isCourseStarted(courseId);
+  }
+
+  getCourseProgress(courseId: string): number {
+    return this.startedCoursesService.getCourseProgress(courseId);
+  }
+
+  startCourse(course: Course): void {
+    // Mark course as started using shared service
+    this.startedCoursesService.startCourse(course.id);
+
+    // Enroll in backend
+    this.courseService.enrollInCourse(course.id).subscribe({
+      next: () => {
+        console.log('Enrolled in course:', course.id);
+      },
+      error: (err) => {
+        console.error('Failed to enroll in course:', err);
+        // Keep local state even if backend fails
+      }
+    });
+  }
+
+  private updateCourseProgress(courseId: string): void {
+    const course = this.courses.find(c => c.id === courseId);
+    if (!course) return;
+
+    // Calculate progress based on completed modules
+    const totalModules = course.modules.length;
+    const completedModules = course.modules.filter(m => 
+      this.getModuleProgress(m.id).completed
+    ).length;
+    
+    const progress = totalModules > 0 ? (completedModules / totalModules) * 100 : 0;
+    
+    // Update progress using shared service
+    this.startedCoursesService.updateCourseProgress(courseId, progress);
   }
 
   private loadCourses(): void {
@@ -420,6 +464,11 @@ export class CourseListComponent implements OnInit {
       });
 
       this.recomputeBadges();
+      
+      // Update course progress if this module is part of active course
+      if (this.activeCourseId) {
+        this.updateCourseProgress(this.activeCourseId);
+      }
     } else {
       this.moduleProgress.set(module.id, {
         ...existing,

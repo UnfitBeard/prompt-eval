@@ -59,22 +59,50 @@ class ProgressService:
 
         enrolled_courses = []
         for progress in progress_list:
-            course = await self.courses_collection.find_one(
-                {"_id": ObjectId(progress["course_id"])},
-                {"title": 1, "total_lessons": 1}
-            )
+            course_id = progress["course_id"]
+            
+            # Try to find course - handle both ObjectId and string IDs
+            course = None
+            try:
+                # Try as ObjectId first
+                course = await self.courses_collection.find_one(
+                    {"_id": ObjectId(course_id)},
+                    {"title": 1, "total_lessons": 1}
+                )
+            except Exception:
+                # If ObjectId conversion fails, try as string ID (for static courses)
+                course = await self.courses_collection.find_one(
+                    {"id": course_id},  # Static courses use 'id' field
+                    {"title": 1, "total_lessons": 1, "id": 1}
+                )
 
             if course:
                 completed_lessons = len(progress.get("completed_lessons", []))
                 total_lessons = course.get("total_lessons", 1)
 
                 enrolled_courses.append(CourseProgressSchema(
-                    course_id=progress["course_id"],
+                    course_id=course_id,
                     course_title=course.get("title", "Unknown"),
                     completed_lessons=completed_lessons,
                     total_lessons=total_lessons,
                     progress_percentage=(
                         completed_lessons / total_lessons) * 100 if total_lessons > 0 else 0,
+                    total_xp_earned=progress.get("total_xp_earned", 0),
+                    current_lesson_id=progress.get("current_lesson_id"),
+                    started_at=progress.get("started_at"),
+                    last_accessed=progress.get("last_accessed")
+                ))
+            else:
+                # If course not found in DB, it might be a static course from frontend
+                # Create a placeholder entry
+                logger.warning(f"Course {course_id} not found in database")
+                completed_lessons = len(progress.get("completed_lessons", []))
+                enrolled_courses.append(CourseProgressSchema(
+                    course_id=course_id,
+                    course_title=course_id.title() if isinstance(course_id, str) else "Unknown",
+                    completed_lessons=completed_lessons,
+                    total_lessons=10,  # Default value for static courses
+                    progress_percentage=0,
                     total_xp_earned=progress.get("total_xp_earned", 0),
                     current_lesson_id=progress.get("current_lesson_id"),
                     started_at=progress.get("started_at"),
@@ -108,24 +136,38 @@ class ProgressService:
 
         activity = []
         for attempt in attempts:
-            # Get lesson details
-            lesson = await mongodb.db.lessons.find_one(
-                {"_id": ObjectId(attempt["lesson_id"])},
-                {"title": 1, "course_id": 1}
-            )
+            # Get lesson details - handle both ObjectId and string IDs
+            lesson = None
+            try:
+                lesson = await mongodb.db.lessons.find_one(
+                    {"_id": ObjectId(attempt["lesson_id"])},
+                    {"title": 1, "course_id": 1}
+                )
+            except Exception:
+                # Skip if invalid ObjectId
+                pass
 
-            # Get course details
-            course = await self.courses_collection.find_one(
-                {"_id": ObjectId(attempt["course_id"])},
-                {"title": 1}
-            )
+            # Get course details - handle both ObjectId and string IDs
+            course = None
+            course_id = attempt.get("course_id")
+            try:
+                course = await self.courses_collection.find_one(
+                    {"_id": ObjectId(course_id)},
+                    {"title": 1}
+                )
+            except Exception:
+                # Try as string ID for static courses
+                course = await self.courses_collection.find_one(
+                    {"id": course_id},
+                    {"title": 1}
+                )
 
             activity.append({
                 "type": "lesson_attempt",
-                "lesson_id": attempt["lesson_id"],
+                "lesson_id": attempt.get("lesson_id"),
                 "lesson_title": lesson.get("title", "Unknown") if lesson else "Unknown",
-                "course_id": attempt["course_id"],
-                "course_title": course.get("title", "Unknown") if course else "Unknown",
+                "course_id": course_id,
+                "course_title": course.get("title", course_id.title() if isinstance(course_id, str) else "Unknown") if course else (course_id.title() if isinstance(course_id, str) else "Unknown"),
                 "xp_earned": attempt.get("xp_earned", 0),
                 "status": attempt.get("status"),
                 "created_at": attempt.get("created_at"),

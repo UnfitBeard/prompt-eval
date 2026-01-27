@@ -18,6 +18,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { JsonPipe } from '@angular/common';
+import { NotificationService } from '../../../Services/notification.service';
 
 @Component({
   selector: 'app-prompt-evaluator',
@@ -52,7 +53,8 @@ export class PromptEvalV2Component implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private evaluatorService: PromptEvaluatorV2Service
+    private evaluatorService: PromptEvaluatorV2Service,
+    private notificationService: NotificationService
   ) {
     this.evaluationForm = this.fb.group({
       prompt: [
@@ -98,6 +100,7 @@ export class PromptEvalV2Component implements OnInit {
   onSubmit(): void {
     if (this.evaluationForm.invalid) {
       this.markFormGroupTouched(this.evaluationForm);
+      this.notificationService.warning('Invalid Input', 'Please enter a prompt between 10 and 2000 characters.');
       return;
     }
 
@@ -110,7 +113,20 @@ export class PromptEvalV2Component implements OnInit {
       .evaluatePrompt(formValue.prompt, formValue.k, formValue.improveIfLow)
       .subscribe({
         error: (error) => {
-          this.errorMessage = error.message || 'An unexpected error occurred';
+          const err = this.notificationService.parseHttpError(error);
+          this.notificationService.error(err.title, err.message);
+          this.errorMessage = err.message;
+          
+          // Check for specific AI service errors
+          if (error.error?.message?.toLowerCase().includes('gemini') ||
+              error.error?.message?.toLowerCase().includes('quota') ||
+              error.error?.message?.toLowerCase().includes('token')) {
+            this.notificationService.error(
+              'AI Service Unavailable',
+              'The AI evaluation service is currently unavailable. Please contact the administrator.',
+              0 // Persistent notification
+            );
+          }
         },
       });
   }
@@ -276,9 +292,17 @@ export class PromptEvalV2Component implements OnInit {
    */
   private checkApiHealth(): void {
     this.evaluatorService.checkHealth().subscribe({
-      error: () => {
-        this.errorMessage =
-          'API server is unavailable. Please make sure the backend is running.';
+      next: () => {
+        // API is healthy
+      },
+      error: (err) => {
+        const error = this.notificationService.parseHttpError(err);
+        this.errorMessage = 'API server is unavailable. Please make sure the backend is running.';
+        this.notificationService.error(
+          'Service Unavailable',
+          'The evaluation service is not responding. Please check your connection or contact support.',
+          0 // Persistent notification
+        );
       },
     });
   }
