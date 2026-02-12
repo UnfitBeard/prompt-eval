@@ -4,7 +4,7 @@ This project is a full-stack application that allows users to **evaluate, score,
 It integrates three major components:
 
 - 🌐 **Frontend:** Angular (19) — Modern UI for users and admins.
-- 🛠 **Backend:** Node.js + Express — Authentication, API endpoints, and business logic.
+- 🛠 **Backend:** Fast API + Python — Authentication, API endpoints, and business logic.
 - 🤖 **AI Model:** Python + scikit-learn — Machine learning scoring engine (served separately).
 
 ---

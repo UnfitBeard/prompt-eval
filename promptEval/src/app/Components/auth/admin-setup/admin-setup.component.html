@@ -1,0 +1,102 @@
+<div class="min-h-screen bg-white flex flex-col">
+  <div class="border-b border-gray-200">
+    <div class="mx-auto max-w-[1100px] px-4 h-12 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="h-5 w-5 rounded bg-blue-600"></div>
+        <span class="text-sm font-semibold text-gray-900">promptEval</span>
+      </div>
+      <div class="flex items-center gap-4 text-sm">
+        <a routerLink="/login" class="text-blue-600 hover:underline">Back to Login</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex-1 flex items-start sm:items-center justify-center">
+    <div class="mt-10 sm:mt-0 w-full max-w-[520px] rounded-xl border border-gray-200 bg-white p-6 shadow-[0_6px_24px_rgba(0,0,0,0.06)]">
+      <div class="text-center">
+        <h1 class="text-lg font-semibold text-gray-900">Set up your admin account</h1>
+        <p class="mt-1 text-sm text-gray-600">
+          This is available only when no admins exist yet.
+        </p>
+      </div>
+
+      <div *ngIf="errorMsg" class="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        {{ errorMsg }}
+      </div>
+
+      <form class="mt-5" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+        <label class="block text-xs font-medium text-gray-700">Full name</label>
+        <input
+          type="text"
+          formControlName="fullName"
+          placeholder="Enter your full name"
+          class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+
+        <label class="mt-4 block text-xs font-medium text-gray-700">Email address</label>
+        <input
+          type="email"
+          formControlName="email"
+          placeholder="Enter your email"
+          class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+
+        <label class="mt-4 block text-xs font-medium text-gray-700">Password</label>
+        <div class="mt-1 relative">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            formControlName="password"
+            placeholder="Create a password"
+            class="w-full rounded-md border border-gray-300 px-3 py-2 pr-10 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            type="button"
+            (click)="togglePassword()"
+            class="absolute inset-y-0 right-2 my-auto h-6 w-6 text-gray-500 hover:text-gray-700"
+            aria-label="Toggle password visibility"
+          >
+            <svg *ngIf="!showPassword" viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor">
+              <path
+                d="M12 5C7 5 2.73 8.11 1 12c1.73 3.89 6 7 11 7s9.27-3.11 11-7c-1.73-3.89-6-7-11-7Zm0 12a5 5 0 1 1 5-5 5 5 0 0 1-5 5Z"
+              />
+            </svg>
+            <svg *ngIf="showPassword" viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor">
+              <path
+                d="M12 6c-4.1 0-7.7 2.4-9.4 6 1.1 2.3 3 4.2 5.3 5.3L4 21l1.4 1.4 16-16L20 4l-3.1 3.1C15.5 6.4 13.8 6 12 6Zm0 12c4.1 0 7.7-2.4 9.4-6-.6-1.2-1.4-2.2-2.4-3.1L16 12.9A5 5 0 0 1 11.1 17L9 19.1c.9.3 1.9.5 3 .5Z"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <label class="mt-4 block text-xs font-medium text-gray-700">Confirm password</label>
+        <input
+          type="password"
+          formControlName="confirmPassword"
+          placeholder="Confirm your password"
+          class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <p *ngIf="(form.touched || submitted) && form.errors?.['mismatch']" class="mt-1 text-xs text-red-600">
+          Passwords do not match.
+        </p>
+
+        <button
+          type="submit"
+          class="mt-5 h-10 w-full rounded-md bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          [disabled]="loading || form.invalid"
+        >
+          {{ loading ? 'Creating…' : 'Create admin account' }}
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <footer class="border-t border-gray-200">
+    <div class="mx-auto max-w-[1100px] px-4 h-12 flex items-center justify-between text-xs text-gray-500">
+      <div class="flex items-center gap-4">
+        <a href="#" class="hover:text-gray-700">Privacy Policy</a>
+        <a href="#" class="hover:text-gray-700">Terms of Service</a>
+      </div>
+      <div>© {{ currentYear }} promptEval. All rights reserved.</div>
+    </div>
+  </footer>
+</div>

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -9,6 +9,7 @@ import {
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../Service/auth.service';
+import { UserRole } from '../../../models/course.model';
 
 @Component({
   selector: 'app-login',
@@ -16,12 +17,26 @@ import { AuthService } from '../../../Service/auth.service';
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   form: FormGroup;
   showPassword = false;
   currentYear = new Date().getFullYear();
   loading = false;
   errorMsg = '';
+  adminBootstrapEnabled = false;
+
+  ngOnInit(): void {
+    // If no admins exist yet, the backend allows a one-time bootstrap.
+    this.authService.getAdminBootstrapStatus().subscribe({
+      next: (res) => {
+        this.adminBootstrapEnabled = !!res?.enabled;
+      },
+      error: () => {
+        // If the check fails, simply hide the link.
+        this.adminBootstrapEnabled = false;
+      },
+    });
+  }
 
   constructor(
     private fb: FormBuilder,
@@ -63,7 +78,14 @@ export class LoginComponent {
     this.authService
       .login({ email: this.email?.value, password: this.password?.value })
       .subscribe({
-        next: () => this.router.navigate(['dashboard']),
+        next: (token) => {
+          const role = token?.user?.role;
+          if (role === UserRole.ADMIN) {
+            this.router.navigate(['admin/admin-dashboard']);
+          } else {
+            this.router.navigate(['dashboard']);
+          }
+        },
         error: (err) => {
           this.errorMsg =
             err?.error?.message ||

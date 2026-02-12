@@ -39,3 +39,4 @@ fastapi-cors
 httpx
 requests
 beautifulsoup4
+psutil

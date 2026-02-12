@@ -1,0 +1,122 @@
+<div class="mx-auto max-w-[1200px] px-4 py-6">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Score History</h1>
+        <p class="mt-1 text-sm text-gray-500">Track your prompt evaluation scores over time</p>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="flex items-center justify-center py-12">
+        <div class="text-center">
+            <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+            <p class="mt-4 text-gray-600">Loading score history...</p>
+        </div>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !loading" class="rounded-lg border border-red-200 bg-red-50 p-4 mb-4">
+        <p class="text-red-800">{{ error }}</p>
+        <button (click)="loadScoreHistory()" class="mt-2 text-sm text-red-600 hover:text-red-800 underline">
+            Retry
+        </button>
+    </div>
+
+    <!-- Content -->
+    <div *ngIf="!loading && !error" class="space-y-6">
+        <!-- Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="rounded-xl border border-gray-200 bg-white p-6">
+                <div class="text-sm text-gray-600">Total Evaluations</div>
+                <div class="mt-1 text-2xl font-semibold text-gray-900">{{ scores.length }}</div>
+            </div>
+            <div class="rounded-xl border border-gray-200 bg-white p-6">
+                <div class="text-sm text-gray-600">Average Score</div>
+                <div class="mt-1 text-2xl font-semibold text-gray-900">
+                    {{ getAverageScore().toFixed(2) }}/10
+                </div>
+            </div>
+            <div class="rounded-xl border border-gray-200 bg-white p-6">
+                <div class="text-sm text-gray-600">Trend</div>
+                <div class="mt-1 text-2xl font-semibold" [ngClass]="{
+                    'text-emerald-600': getTrend().direction === 'up',
+                    'text-red-600': getTrend().direction === 'down',
+                    'text-gray-600': getTrend().direction === 'stable'
+                }">
+                    <span *ngIf="getTrend().direction === 'up'">↑</span>
+                    <span *ngIf="getTrend().direction === 'down'">↓</span>
+                    <span *ngIf="getTrend().direction === 'stable'">→</span>
+                    {{ getTrend().percentage > 0 ? getTrend().percentage.toFixed(1) + '%' : 'Stable' }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart -->
+        <div *ngIf="chartData.length > 0" class="rounded-xl border border-gray-200 bg-white p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Score Trend</h2>
+            <svg width="600" height="200" class="block">
+                <!-- Grid lines -->
+                <line x1="40" y1="40" x2="40" y2="160" stroke="#E5E7EB" stroke-width="1" />
+                <line x1="40" y1="160" x2="560" y2="160" stroke="#E5E7EB" stroke-width="1" />
+                
+                <!-- Chart line -->
+                <path
+                    [attr.d]="getChartPath()"
+                    fill="none"
+                    stroke="#3B82F6"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" />
+                
+                <!-- Data points -->
+                <circle
+                    *ngFor="let value of chartData; let i = index"
+                    [attr.cx]="getCircleX(i)"
+                    [attr.cy]="getCircleY(value)"
+                    r="4"
+                    fill="#3B82F6"
+                    class="cursor-pointer" />
+                
+                <!-- Labels -->
+                <text
+                    *ngFor="let label of chartLabels; let i = index"
+                    [attr.x]="getLabelX(i)"
+                    y="185"
+                    text-anchor="middle"
+                    class="text-[10px] fill-gray-500">
+                    {{ label }}
+                </text>
+            </svg>
+        </div>
+
+        <!-- Score List -->
+        <div *ngIf="scores.length > 0" class="rounded-xl border border-gray-200 bg-white overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Recent Evaluations</h2>
+            </div>
+            <div class="divide-y divide-gray-200">
+                <div *ngFor="let score of scores.slice(0, 10)" class="px-6 py-4 hover:bg-gray-50">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-sm text-gray-900 font-medium truncate">{{ score.prompt.substring(0, 100) }}{{ score.prompt.length > 100 ? '...' : '' }}</p>
+                            <p class="text-xs text-gray-500 mt-1">{{ score.timestamp | date:'short' }}</p>
+                        </div>
+                        <div class="ml-4 text-right">
+                            <div class="text-lg font-semibold" [ngClass]="{
+                                'text-emerald-600': score.overall_score >= 8,
+                                'text-yellow-600': score.overall_score >= 6 && score.overall_score < 8,
+                                'text-red-600': score.overall_score < 6
+                            }">
+                                {{ score.overall_score.toFixed(2) }}/10
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="scores.length === 0" class="rounded-xl border border-gray-200 bg-white p-12 text-center">
+            <p class="text-gray-500">No score history yet. Start evaluating prompts to see your progress!</p>
+        </div>
+    </div>
+</div>
+

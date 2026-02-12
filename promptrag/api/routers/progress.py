@@ -1,6 +1,8 @@
 # api/routers/progress.py
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from typing import List
+from typing import List, Optional
+
+from pydantic import BaseModel
 
 from core.security import get_current_active_user
 from schemas.response import APIResponse
@@ -12,6 +14,53 @@ router = APIRouter(prefix="/progress", tags=["progress"])
 progress_service = ProgressService()
 
 
+class AddXpRequest(BaseModel):
+    amount: int
+    reason: Optional[str] = None
+
+
+@router.post("/xp", response_model=APIResponse[dict])
+async def add_xp(
+    payload: AddXpRequest,
+    current_user: UserInDB = Depends(get_current_active_user),
+):
+    """Add XP to the current user.
+
+    This is primarily used by the frontend "XP mode" to keep the
+    dashboard's total XP in sync when a user completes static
+    curriculum modules that are not yet backed by real lesson
+    documents in MongoDB.
+    """
+    from services.user_service import UserService
+
+    user_service = UserService()
+    try:
+        success = await user_service.add_xp(str(current_user.id), payload.amount)
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to add XP",
+            )
+
+        # Return the updated total XP so the client *could* refresh
+        # local state if needed.
+        updated_user = await user_service.get_user_by_id(str(current_user.id))
+        total_xp = updated_user.xp if updated_user else current_user.xp
+
+        return APIResponse(
+            success=True,
+            data={"total_xp": total_xp},
+            message=payload.reason,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error adding XP: {str(e)}",
+        )
+
+
 @router.get("/summary", response_model=APIResponse[UserProgressSummarySchema])
 async def get_progress_summary(
     current_user: UserInDB = Depends(get_current_active_user)
@@ -19,7 +68,10 @@ async def get_progress_summary(
     """Get user's progress summary"""
     try:
         summary = await progress_service.get_user_progress_summary(str(current_user.id))
-        return APIResponse.success(data=summary)
+        return APIResponse(
+            success=True,
+            data=summary,
+        )
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -39,7 +91,10 @@ async def get_recent_activity(
 ):
     """Get user's recent learning activity"""
     activity = await progress_service.get_recent_activity(str(current_user.id), limit)
-    return APIResponse.success(data=activity)
+    return APIResponse(
+        success=True,
+        data=activity,
+    )
 
 
 @router.get("/streak", response_model=APIResponse[dict])
@@ -49,7 +104,10 @@ async def get_streak_data(
 ):
     """Get user's streak data"""
     streak_data = await progress_service.get_streak_data(str(current_user.id), days)
-    return APIResponse.success(data=streak_data)
+    return APIResponse(
+        success=True,
+        data=streak_data,
+    )
 
 
 @router.get("/achievements", response_model=APIResponse[List[AchievementSchema]])
@@ -58,7 +116,10 @@ async def get_achievements(
 ):
     """Get user's achievements"""
     achievements = await progress_service.get_achievements(str(current_user.id))
-    return APIResponse.success(data=achievements)
+    return APIResponse(
+        success=True,
+        data=achievements,
+    )
 
 
 @router.get("/leaderboard", response_model=APIResponse[List[dict]])
@@ -98,4 +159,7 @@ async def get_leaderboard(
                 "is_current_user": True
             })
 
-    return APIResponse.success(data=leaderboard)
+    return APIResponse(
+        success=True,
+        data=leaderboard,
+    )

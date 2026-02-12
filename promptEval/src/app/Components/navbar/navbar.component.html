@@ -12,12 +12,18 @@
             </div>
 
             <!-- navbar.component.html -->
-            <nav class="mx-auto max-w-[1280px] h-16 px-6 flex items-center gap-6">
-                <a *ngFor="let item of (items ?? []); trackBy: trackByHref" [routerLink]="item.href"
-                    routerLinkActive="text-blue-900" [routerLinkActiveOptions]="{ exact: true }"
-                    class="font-medium text-gray-600 hover:text-blue-900 transition-colors">
-                    {{ item.label }}
-                </a>
+            <nav class="mx-auto max-w-[1280px] h-16 px-6 flex items-center gap-1">
+                <ng-container *ngFor="let item of visibleItems(); trackBy: trackByHref; let isLast = last">
+                    <a [routerLink]="item.href"
+                        routerLinkActive="text-blue-900 bg-blue-50" 
+                        [routerLinkActiveOptions]="{ exact: item.href === '/dashboard' || item.href === '/admin/admin-dashboard' }"
+                        class="font-medium text-gray-600 hover:text-blue-900 hover:bg-gray-50 px-3 py-2 rounded-md transition-colors text-sm">
+                        {{ item.label }}
+                    </a>
+                    <!-- Visual separator for admin items -->
+                    <span *ngIf="item.adminOnly && !isLast && visibleItems()[visibleItems().indexOf(item) + 1]?.adminOnly" 
+                          class="w-px h-6 bg-gray-300 mx-1"></span>
+                </ng-container>
             </nav>
         </div>
 

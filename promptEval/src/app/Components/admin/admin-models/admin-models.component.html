@@ -1,0 +1,131 @@
+<div class="mx-auto max-w-[1200px] px-4 py-6">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Evaluation Models & Configurations</h1>
+        <p class="mt-1 text-sm text-gray-500">Manage ML model configurations and settings</p>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="flex items-center justify-center py-12">
+        <div class="text-center">
+            <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+            <p class="mt-4 text-gray-600">Loading configuration...</p>
+        </div>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !loading" class="rounded-lg border border-red-200 bg-red-50 p-4 mb-4">
+        <p class="text-red-800">{{ error }}</p>
+        <button (click)="loadConfiguration()" class="mt-2 text-sm text-red-600 hover:text-red-800 underline">
+            Retry
+        </button>
+    </div>
+
+    <!-- Configuration Display -->
+    <div *ngIf="!loading && !error && config" class="space-y-6">
+        <!-- Status Card -->
+        <div class="rounded-xl border border-gray-200 bg-white p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-900">Model Status</h2>
+                <button
+                    *ngIf="!editing"
+                    (click)="startEdit()"
+                    class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                    Edit Configuration
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                    <span class="text-sm text-gray-600">Status</span>
+                    <span [ngClass]="getStatusColor(config.status)" class="text-sm font-medium">
+                        {{ config.status }}
+                    </span>
+                </div>
+
+                <div *ngIf="config.message" class="rounded-lg bg-yellow-50 border border-yellow-200 p-3">
+                    <p class="text-sm text-yellow-800">{{ config.message }}</p>
+                </div>
+
+                <div *ngIf="config.embedder" class="flex items-center justify-between py-2 border-b border-gray-100">
+                    <span class="text-sm text-gray-600">Embedder Model</span>
+                    <span class="text-sm font-medium text-gray-900">{{ config.embedder }}</span>
+                </div>
+
+                <div *ngIf="config.version" class="flex items-center justify-between py-2 border-b border-gray-100">
+                    <span class="text-sm text-gray-600">Version</span>
+                    <span class="text-sm font-medium text-gray-900">{{ config.version }}</span>
+                </div>
+
+                <div *ngIf="config.targets && config.targets.length > 0" class="py-2">
+                    <span class="text-sm text-gray-600">Evaluation Targets</span>
+                    <div class="mt-2 flex flex-wrap gap-2">
+                        <span *ngFor="let target of config.targets" 
+                              class="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800">
+                            {{ target }}
+                        </span>
+                    </div>
+                </div>
+
+                <div *ngIf="config.model_path" class="flex items-center justify-between py-2 border-b border-gray-100">
+                    <span class="text-sm text-gray-600">Model Path</span>
+                    <span class="text-sm font-mono text-gray-700">{{ config.model_path }}</span>
+                </div>
+
+                <div *ngIf="config.scaler_path" class="flex items-center justify-between py-2 border-b border-gray-100">
+                    <span class="text-sm text-gray-600">Scaler Path</span>
+                    <span class="text-sm font-mono text-gray-700">{{ config.scaler_path }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Form -->
+        <div *ngIf="editing" class="rounded-xl border border-gray-200 bg-white p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Edit Configuration</h2>
+            
+            <form (ngSubmit)="saveConfiguration()" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Embedder Model</label>
+                    <input
+                        type="text"
+                        [(ngModel)]="formData.embedder"
+                        name="embedder"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                        placeholder="e.g., all-MiniLM-L6-v2" />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Version</label>
+                    <input
+                        type="text"
+                        [(ngModel)]="formData.version"
+                        name="version"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                        placeholder="e.g., 1.0.0" />
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button
+                        type="submit"
+                        class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                        Save Changes
+                    </button>
+                    <button
+                        type="button"
+                        (click)="cancelEdit()"
+                        class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Info Note -->
+        <div class="rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <p class="text-sm text-blue-800">
+                <strong>Note:</strong> Model configuration updates may require model retraining or service restart.
+                Changes to embedder or version should be tested thoroughly before deployment.
+            </p>
+        </div>
+    </div>
+</div>
+

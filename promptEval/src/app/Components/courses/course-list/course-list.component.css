@@ -1,4 +1,4 @@
-/* Add to your global styles.css or component CSS */
+/* Line clamp helpers to match existing aesthetic */
 .line-clamp-1 {
   overflow: hidden;
   display: -webkit-box;
@@ -18,4 +18,16 @@
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
+}
+
+/* Subtle hover for module titles */
+ol li:hover h4 {
+  color: rgb(79 70 229); /* indigo-600 */
+}
+
+/* Better spacing on small screens for the split view */
+@media (max-width: 640px) {
+  #learning-mode .rounded-2xl {
+    border-radius: 1rem;
+  }
 }

@@ -9,7 +9,9 @@ class Settings(BaseSettings):
     # MongoDB
     MONGO_DB_URI: str = Field(
         default=..., description="MongoDB connection URI")
-    MONGO_DB_NAME: str = "prompt_edu"
+    # Default DB used by this repo's Mongo datasets.
+    # Can be overridden via env var MONGO_DB_NAME.
+    MONGO_DB_NAME: str = "PromptEval"
 
     # JWT Authentication
     JWT_SECRET_KEY: str = Field(

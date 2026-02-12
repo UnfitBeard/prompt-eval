@@ -214,11 +214,20 @@ class CourseService:
             if existing:
                 return True  # Already enrolled
 
+            # Try to infer a sensible starting lesson so the dashboard
+            # can immediately reflect that the user has "started" this
+            # course.
+            first_lesson = await self._db.lessons.find_one(
+                {"course_id": course_id},
+                sort=[("order", 1)],
+            )
+            current_lesson_id = str(first_lesson["_id"]) if first_lesson else None
+
             # Create progress record
             progress = {
                 "user_id": user_id,
                 "course_id": course_id,
-                "current_lesson_id": None,
+                "current_lesson_id": current_lesson_id,
                 "completed_lessons": [],
                 "total_xp_earned": 0,
                 "started_at": datetime.utcnow(),

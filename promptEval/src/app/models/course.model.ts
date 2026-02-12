@@ -187,8 +187,56 @@ export interface Achievement {
   description: string;
   icon: string;
   xp_reward: number;
+  // Whether this badge / achievement has been earned by the user.
+  // This is populated by the backend for the dashboard.
+  earned?: boolean;
   earned_at?: string;
   progress?: number;
+}
+
+// Dashboard-specific models
+
+// Per-module (lesson) progress for a course.
+export interface ModuleProgress {
+  module_id: string;
+  course_id: string;
+  title: string;
+  order: number;
+  max_xp: number;
+  xp_earned: number;
+  status: 'not_started' | 'in_progress' | 'completed';
+  score_percentage?: number | null;
+  completed_at?: string | null;
+}
+
+// Lightweight certificate representation for the dashboard.
+export interface Certificate {
+  id: string;
+  user_id: string;
+  course_id: string;
+  title: string;
+  issued_at: string;
+  download_url: string;
+}
+
+// Inferred statistics computed on the client side from
+// UserProgressSummary and (optionally) module-level data.
+export interface UserDashboardStats {
+  // Percentage of enrolled courses that are fully completed.
+  completionRate: number;
+  // Mean of per-course progress_percentage.
+  averageCourseProgress: number;
+  // Total lessons completed vs total lessons across enrolled courses.
+  totalLessonsCompleted: number;
+  totalLessons: number;
+  // XP progress towards the next level (0-100%). The exact XP
+  // thresholds are defined in the dashboard component and are easy to
+  // tweak there.
+  xpProgressToNextLevel: number;
+}
+
+export interface UserDashboardProgress {
+  summary: UserProgressSummary;
 }
 
 // API Response models

@@ -17,6 +17,13 @@ class UserService:
         # Don't touch mongodb.db at import time.
         self.collection = None
 
+    async def any_admin_exists(self) -> bool:
+        """Return True if at least one admin user exists."""
+        await self._ensure_connected()
+        return (
+            await self.collection.count_documents({"role": UserRole.ADMIN.value})
+        ) > 0
+
     async def _ensure_connected(self):
         if mongodb.db is None:
             await mongodb.connect()
@@ -24,8 +31,12 @@ class UserService:
         if self.collection is None:
             self.collection = mongodb.db.users
 
-    async def create_user(self, user_data: UserCreateSchema) -> UserInDB:
-        """Create a new user"""
+    async def _create_user_with_role(
+        self,
+        user_data: UserCreateSchema,
+        role: UserRole,
+    ) -> UserInDB:
+        """Internal helper to create a user with a specific role."""
         await self._ensure_connected()
 
         # Check if user exists
@@ -46,7 +57,7 @@ class UserService:
         user_dict = user_data.dict(exclude={"password"})
         user_dict.update({
             "hashed_password": get_password_hash(user_data.password),
-            "role": UserRole.STUDENT.value,
+            "role": role.value,
             "level": UserLevel.BEGINNER.value,
             "xp": 0,
             "streak_days": 0,
@@ -62,6 +73,14 @@ class UserService:
         user_dict["id"] = str(result.inserted_id)
 
         return UserInDB(**user_dict)
+
+    async def create_user(self, user_data: UserCreateSchema) -> UserInDB:
+        """Create a new student user"""
+        return await self._create_user_with_role(user_data, UserRole.STUDENT)
+
+    async def create_admin_user(self, user_data: UserCreateSchema) -> UserInDB:
+        """Create a new admin user"""
+        return await self._create_user_with_role(user_data, UserRole.ADMIN)
 
     async def authenticate_user(self, username: str, password: str) -> Optional[UserInDB]:
         """Authenticate a user"""

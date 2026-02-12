@@ -81,7 +81,7 @@ export class PromptEvalService {
 
   getPromptScores(prompt: string): Observable<ScoresResponse> {
     return this.http
-      .post<ScoresResponse>(`${this.baseUrl}/process_prompt`, { prompt })
+      .post<ScoresResponse>(`${this.baseUrl}/evaluate`, { prompt })
       .pipe(catchError(this.handle));
   }
 

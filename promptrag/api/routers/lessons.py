@@ -30,7 +30,10 @@ async def get_lesson(
             detail="Lesson not found"
         )
 
-    return APIResponse.success(data=lesson)
+    return APIResponse(
+        success=True,
+        data=lesson,
+    )
 
 
 @router.post("/{lesson_id}/attempt", response_model=APIResponse[LessonAttemptResponseSchema])
@@ -48,9 +51,10 @@ async def submit_lesson_attempt(
             time_spent=attempt.time_spent_seconds
         )
 
-        return APIResponse.success(
+        return APIResponse(
+            success=True,
             data=result,
-            message="Lesson attempt submitted successfully"
+            message="Lesson attempt submitted successfully",
         )
     except ValueError as e:
         raise HTTPException(
@@ -83,7 +87,10 @@ async def get_lesson_attempts(
         attempt["id"] = str(attempt["_id"])
         del attempt["_id"]
 
-    return APIResponse.success(data=attempts)
+    return APIResponse(
+        success=True,
+        data=attempts,
+    )
 
 
 @router.post("/{lesson_id}/complete", response_model=APIResponse[dict])
@@ -117,7 +124,8 @@ async def mark_lesson_completed(
         xp_earned=5  # Small reward for reading
     )
 
-    return APIResponse.success(
+    return APIResponse(
+        success=True,
         data={"message": "Lesson marked as completed"},
-        message="Lesson completed!"
+        message="Lesson completed!",
     )

@@ -1,6 +1,13 @@
 # server.py - REDESIGNED FOR SPEED
 from api.routers import (
-    auth, courses, lessons, progress
+    auth,
+    courses,
+    lessons,
+    progress,
+    user_dashboard,
+    admin,
+    prompt_scores,
+    templates,
 )
 from services.prompt_evaluator_endpoint import chatbot_router, init_chatbot_service
 from langchain.messages import SystemMessage, HumanMessage
@@ -25,6 +32,7 @@ import uuid
 import time
 import json
 import os
+import re
 from typing import List, Optional, Dict
 from datetime import datetime
 
@@ -167,7 +175,10 @@ app = FastAPI(title="Fast Prompt Evaluator", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4200"],
+    allow_origins=[
+        "http://localhost:4200",
+        "https://prompt-eval-wz8i.onrender.com",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -179,6 +190,14 @@ app.include_router(auth.router, prefix="/api/v1")
 app.include_router(courses.router, prefix="/api/v1")
 app.include_router(lessons.router, prefix="/api/v1")
 app.include_router(progress.router, prefix="/api/v1")
+# New: user-centric dashboard endpoints (progress, modules, badges, certificates)
+app.include_router(user_dashboard.router, prefix="/api/v1")
+# Admin endpoints
+app.include_router(admin.router, prefix="/api/v1")
+# Prompt scores endpoints
+app.include_router(prompt_scores.router, prefix="/api/v1")
+# Templates endpoints
+app.include_router(templates.router, prefix="/api/v1")
 
 
 # ======================
@@ -429,6 +448,18 @@ async def evaluate_prompt(p: PromptIn, background_tasks: BackgroundTasks):
             "overall": overall
         })
 
+        # NEW: Override penalty for substantial prompts
+        words = re.findall(r"[a-z']+", p.prompt.lower())
+        word_count = len(words)
+        temp_overall = np.mean(list(final_scores.values()))
+
+        if temp_overall <= 2.5 and word_count > 15:
+            logger.info(f"Overriding vagueness penalty for substantial prompt ({word_count} words)")
+            final_scores = {k: round(val, 1) for k, val in base_scores.items()}
+            trace.log("penalty_override", {"reason": "substantial_prompt", "word_count": word_count})
+
+        overall = np.mean(list(final_scores.values()))
+
         # STEP 2: Retrieve similar prompts IN PARALLEL with scoring
         trace.log("retrieval_start")
         similar_future = retrieve_similar_async(p.prompt, p.k)
@@ -442,14 +473,14 @@ async def evaluate_prompt(p: PromptIn, background_tasks: BackgroundTasks):
         suggestions = []
         improved_version = None
 
-        if needs_improvement:
+        if needs_improvement or not needs_improvement:
             # STEP 4: Generate quick suggestions (fast)
             trace.log("suggestions_start")
             suggestions = await generate_suggestions_fast(p.prompt, final_scores, similar_prompts)
             trace.log("suggestions_complete", {"count": len(suggestions)})
 
             # STEP 5: Generate improved version if suggestions exist
-            if suggestions and overall < (SCORE_THRESHOLD - 1.0):
+            if suggestions and overall < (SCORE_THRESHOLD - 1.0) or not needs_improvement:
                 trace.log("improvement_generation_start")
                 improved_version = await generate_improved_version(p.prompt, suggestions, similar_prompts)
                 trace.log("improvement_generation_complete")

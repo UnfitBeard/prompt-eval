@@ -1,0 +1,106 @@
+<div class="mx-auto max-w-[1200px] px-4 py-6">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Leaderboard</h1>
+        <p class="mt-1 text-sm text-gray-500">Top users by XP and scoring points</p>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="flex items-center justify-center py-12">
+        <div class="text-center">
+            <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+            <p class="mt-4 text-gray-600">Loading leaderboard...</p>
+        </div>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !loading" class="rounded-lg border border-red-200 bg-red-50 p-4 mb-4">
+        <p class="text-red-800">{{ error }}</p>
+        <button (click)="loadLeaderboard()" class="mt-2 text-sm text-red-600 hover:text-red-800 underline">
+            Retry
+        </button>
+    </div>
+
+    <!-- Leaderboard -->
+    <div *ngIf="!loading && !error" class="space-y-4">
+        <!-- Current User Rank (if not in top 50) -->
+        <div *ngIf="currentUserRank && currentUserRank > 50" class="rounded-xl border-2 border-blue-200 bg-blue-50 p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-blue-900">Your Rank</p>
+                    <p class="text-2xl font-bold text-blue-600">#{{ currentUserRank }}</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-blue-700">Keep going!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Users -->
+        <div class="rounded-xl border border-gray-200 bg-white overflow-hidden">
+            <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Top Users</h2>
+            </div>
+            <div class="divide-y divide-gray-200">
+                <div
+                    *ngFor="let entry of leaderboard"
+                    [class.bg-blue-50]="entry.is_current_user"
+                    [class.border-blue-200]="entry.is_current_user"
+                    class="px-6 py-4 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center gap-4">
+                        <!-- Rank -->
+                        <div class="w-12 text-center">
+                            <span class="text-lg font-bold" [ngClass]="{
+                                'text-yellow-600': entry.rank === 1,
+                                'text-gray-400': entry.rank === 2,
+                                'text-orange-600': entry.rank === 3,
+                                'text-gray-600': entry.rank > 3
+                            }">
+                                {{ getRankBadge(entry.rank) }}
+                            </span>
+                        </div>
+
+                        <!-- Avatar -->
+                        <div class="flex-shrink-0">
+                            <div *ngIf="entry.avatar_url" class="w-12 h-12 rounded-full overflow-hidden">
+                                <img [src]="entry.avatar_url" [alt]="entry.username" class="w-full h-full object-cover" />
+                            </div>
+                            <div *ngIf="!entry.avatar_url" class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                                <span class="text-blue-600 font-semibold text-sm">{{ getInitials(entry.username) }}</span>
+                            </div>
+                        </div>
+
+                        <!-- User Info -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                                <p class="text-base font-semibold text-gray-900 truncate">
+                                    {{ entry.username }}
+                                    <span *ngIf="entry.is_current_user" class="ml-2 text-xs font-normal text-blue-600">(You)</span>
+                                </p>
+                            </div>
+                            <div class="flex items-center gap-3 mt-1">
+                                <span [ngClass]="getLevelColor(entry.level)" class="text-xs font-medium">
+                                    {{ entry.level }}
+                                </span>
+                                <span class="text-xs text-gray-500">
+                                    🔥 {{ entry.streak_days }} day streak
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- XP -->
+                        <div class="text-right">
+                            <p class="text-lg font-bold text-gray-900">{{ entry.xp.toLocaleString() }}</p>
+                            <p class="text-xs text-gray-500">XP</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="leaderboard.length === 0" class="rounded-xl border border-gray-200 bg-white p-12 text-center">
+            <p class="text-gray-500">No leaderboard data available yet.</p>
+        </div>
+    </div>
+</div>
+

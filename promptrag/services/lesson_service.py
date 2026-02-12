@@ -183,9 +183,40 @@ class LessonService:
             result = await self.attempts_collection.insert_one(attempt)
             attempt["id"] = str(result.inserted_id)
 
-            # If perfect score, mark lesson as completed
+            # Award XP for this attempt even if the user didn't get a
+            # perfect score. For perfect scores we continue to delegate
+            # to _mark_lesson_completed(), which also updates XP and
+            # completion metadata.
+            if status != AttemptStatus.CORRECT and total_xp > 0:
+                await self.progress_collection.update_one(
+                    {
+                        "user_id": user_id,
+                        "course_id": lesson["course_id"],
+                    },
+                    {
+                        "$inc": {"total_xp_earned": total_xp},
+                        "$set": {
+                            "current_lesson_id": lesson_id,
+                            "last_accessed": datetime.utcnow(),
+                        },
+                        "$setOnInsert": {
+                            "started_at": datetime.utcnow(),
+                            "completed": False,
+                        },
+                    },
+                    upsert=True,
+                )
+
+                await mongodb.db.users.update_one(
+                    {"_id": ObjectId(user_id)},
+                    {"$inc": {"xp": total_xp}},
+                )
+
+            # If perfect score, mark lesson as completed (includes XP award)
             if status == AttemptStatus.CORRECT:
-                await self._mark_lesson_completed(user_id, lesson["course_id"], lesson_id, total_xp)
+                await self._mark_lesson_completed(
+                    user_id, lesson["course_id"], lesson_id, total_xp
+                )
 
             return {
                 "attempt_id": attempt["id"],
